@@ -31,7 +31,7 @@ suite('emit()', () => {
 
 suite('on()', () => {
   test('subscribes to events', () => {
-    let spy  = sinon.spy();
+    let spy = sinon.spy();
     HP.on('e', spy);
     return HP.emit('e').then(() => spy.should.have.been.calledOnce);
   });
@@ -77,8 +77,7 @@ suite('once()', () => {
   test('it subscribes only to the first event', () => {
     let spy = sinon.spy();
     HP.once('e', spy);
-    return HP.emit('e')
-      .then(HP.emit('e'))
+    return Promise.all([HP.emit('e'), HP.emit('e')])
       .then(() => spy.should.have.been.calledOnce);
   });
 });
@@ -104,8 +103,7 @@ suite('onceBefore()', () => {
   test('it will only subscribe to the first event', () => {
     let spy = sinon.spy();
     HP.onceBefore('e', spy);
-    return HP.emit('e')
-      .then(HP.emit('e'))
+    return Promise.all([HP.emit('e'), HP.emit('e')])
       .then(() => spy.should.have.been.calledOnce);
   });
 });
@@ -120,8 +118,7 @@ suite('onceAfter()', () => {
   test('subscribes only to the first event', () => {
     let spy = sinon.spy();
     HP.onceAfter('e', spy);
-    return HP.emit('e')
-      .then(HP.emit('e'))
+    return Promise.all([HP.emit('e'), HP.emit('e')])
       .then(() => spy.should.have.been.calledOnce);
   });
 });
