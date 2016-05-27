@@ -6,6 +6,7 @@
   "scripts": {
     "lint": "eslint .",
     "lint-w": "nodemon -x 'npm run lint'",
+    "prepublish": "npm test",
     "spec": "mocha --ui tdd --check-leaks --recursive",
     "spec-w": "npm run spec -- --watch --growl --reporter nyan",
     "test": "npm run lint && npm run spec"
