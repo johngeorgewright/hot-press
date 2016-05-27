@@ -1,0 +1,23 @@
+{
+  "name": "hot-press",
+  "version": "0.0.0",
+  "description": "PubSub library with extra asynchronous handling",
+  "main": "hot-press.js",
+  "scripts": {
+    "lint": "eslint .",
+    "lint-w": "nodemon -x 'npm run lint'",
+    "spec": "mocha --ui tdd --check-leaks --recursive",
+    "spec-w": "npm run spec -- --watch --growl --reporter nyan",
+    "test": "npm run lint && npm run spec"
+  },
+  "author": "John Wright <johngeorge.wright@gmail.com>",
+  "license": "ISC",
+  "devDependencies": {
+    "chai": "^3.5.0",
+    "eslint": "^2.10.2",
+    "mocha": "^2.4.5",
+    "nodemon": "^1.9.2",
+    "sinon": "^1.17.4",
+    "sinon-chai": "^2.8.0"
+  }
+}
