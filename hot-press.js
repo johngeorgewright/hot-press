@@ -1,3 +1,5 @@
+'use strict';
+
 let subscriptions = {};
 
 function getSubscriptionsFor(message) {
