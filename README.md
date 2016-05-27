@@ -16,6 +16,10 @@ npm i hot-press
 
 ### Standard PubSub
 
+Basic PubSub architecture we're mostly familiar with. Using the `on()` function,
+you can add subscribers to events that are published using the `emit()`
+function.
+
 ```javascript
 import {emit, on} from 'hot-press';
 
@@ -24,6 +28,8 @@ emit('event', 'some', 'variables'); // 'some' 'variables'
 ```
 
 ### Unsubscribe
+
+Remove all or specific subscribers from events using the `off()` function.
 
 ```javascript
 import {emit, off, on} from 'hot-press';
@@ -45,6 +51,15 @@ emit('event'); // <nothing>
 
 ### Subscribing to the beginning and end of events
 
+There are 3 parts to an event lifecycle.
+
+1. "Before" the event
+2. "On" the event
+3. "After" the event
+
+You can subscribe to any part of the event lifecycle using the appropriate
+function.
+
 ```javascript
 import {after, before, emit, off, on} from 'hot-press';
 
@@ -61,6 +76,17 @@ emit('event'); // 1 2 3
 ```
 
 ### Asynchronous subscriptions
+
+If your subscription returns a Promise then the next part of the event lifecycle
+will not be published until the promise has resolved.
+
+> **Note:** It will not delay subscriptions within the same part of the lifecycle,
+> only those that are to be published next. For example, all subscriptions
+> implemented with the `on()` function will wait until all subscriptions
+> implemented with the `before()` function have been resolved.
+
+And finally the `emit` function will return a promise that will resolve once
+the "after" part of the lifecycle has resolved.
 
 ```javascript
 import {before, emit, on} from 'hot-press';
@@ -80,3 +106,40 @@ function eventuallyLog(num) {
   });
 }
 ```
+
+## API
+
+### `after(String eventName, Function subscriber)`
+
+Register a subscribing function to the end of the event.
+
+### `before(String eventName, Function subscriber)`
+
+Register a subscribing function to the beginning of the event.
+
+### `emit(String eventName, [Any ...data])`
+
+Publishes the event and passes all data arguments directly to the subscribers.
+
+### `off(String eventName, [Function subscriber])`
+
+Removes a given subscriber from an event. If none is specified, it will remove all
+subscribers from the event.
+
+### `on(String eventName, Function subscriber)`
+
+Register a subcribing function to the event
+
+### `once(String eventName, Function subscriber)`
+
+Registers a subscriber for just one event before it's removed.
+
+### `onceAfter(String eventName, Function subscriber)`
+
+Registers a subscriber, to the end of the event lifecycle, for just one event
+before it is removed.
+
+### `onceBefore(String eventName, Function subscriber)`
+
+Registers a subscriber, to the beginning of the event lifecycyle, for just one
+event before it is removed.
