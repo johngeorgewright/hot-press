@@ -129,9 +129,7 @@ function testBeforePause(method) {
     HP.on('e', spy);
     method('e', () => new Promise(resolve => setTimeout(resolve, 100)));
     HP.emit('e');
-    setTimeout(() => {
-      spy.should.not.have.been.called;
-    }, 90);
+    setTimeout(() => spy.should.not.have.been.called, 90);
     setTimeout(() => {
       spy.should.have.been.calledOnce;
       done();
