@@ -19,6 +19,20 @@ function on(message, fn) {
   getSubscriptionsFor(message).push(fn);
 }
 
+function all(messages, fn) {
+  let toDo = messages.length;
+  let dataCollection = {};
+  let subscriber = (message, ...data) => {
+    dataCollection[message] = data;
+    toDo--;
+    if (!toDo) {
+      fn(dataCollection);
+      toDo = messages.length;
+    }
+  };
+  messages.forEach(message => on(message, subscriber));
+}
+
 function before(message, fn) {
   on(beforeMessage(message), fn);
 }
@@ -59,19 +73,25 @@ function onceAfter(message, fn) {
   return once(afterMessage(message), fn);
 }
 
-function createEmitter(data) {
+function createEmitter(...data) {
   return message => Promise.all(
-    getSubscriptionsFor(message).map(fn => fn(message, data))
+    getSubscriptionsFor(message).map(fn => fn(message, ...data))
   );
 }
 
-function emit(message, data) {
-  let emit = createEmitter(data);
+function emit(message, ...data) {
+  let emit = createEmitter(...data);
   return emit(beforeMessage(message))
     .then(() => emit(message))
     .then(() => emit(afterMessage(message)));
 }
 
+function trigger(trigger, messages) {
+  on(trigger, (_, ...data) => (
+    messages.map(message => emit(message, ...data))
+  ));
+}
+
 Object.assign(exports, {
-  after, before, emit, off, on, once, onceAfter, onceBefore
+  after, all, before, emit, off, on, once, onceAfter, onceBefore, trigger
 });

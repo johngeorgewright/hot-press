@@ -113,6 +113,10 @@ function eventuallyLog(num) {
 
 Register a subscribing function to the end of the event.
 
+### `all(Array eventNames, Function subscriber)`
+
+Register a subscriber for when all events have been published
+
 ### `before(String eventName, Function subscriber)`
 
 Register a subscribing function to the beginning of the event.
@@ -141,5 +145,9 @@ before it is removed.
 
 ### `onceBefore(String eventName, Function subscriber)`
 
-Registers a subscriber, to the beginning of the event lifecycyle, for just one
+Registers a subscriber, to the beginning of the event lifecycle, for just one
 event before it is removed.
+
+### `triggers(String eventName, Array eventNames)`
+
+When the event has been published, publish an array of of other events.

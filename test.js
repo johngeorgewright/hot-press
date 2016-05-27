@@ -37,11 +37,45 @@ suite('on()', () => {
   });
 
   test('gives the message name and any data', () => {
-    HP.on('e', (message, data) => {
+    HP.on('e', (message, ...data) => {
       message.should.equal('e');
-      data.should.eql({mung: 'face'});
+      data.should.eql([{mung: 'face'}, {some: 'thing'}]);
     });
-    return HP.emit('e', {mung: 'face'});
+    return HP.emit('e', {mung: 'face'}, {some: 'thing'});
+  });
+});
+
+suite('all()', () => {
+  let spy;
+
+  setup(() => {
+    spy = sinon.spy();
+    HP.all(['e', 'e1', 'e2'], spy);
+  });
+
+  teardown(() => HP.off('e1, e2'));
+
+  test('is called once all events have been published', () => {
+    return HP.emit('e')
+      .then(() => spy.should.not.have.been.called)
+      .then(() => HP.emit('e1'))
+      .then(() => spy.should.not.have.been.called)
+      .then(() => HP.emit('e2'))
+      .then(() => spy.should.have.been.calledOnce);
+  });
+
+  test('that the data and event names have been passed to the subscriber', () => {
+    return Promise.all([
+      HP.emit('e', 1, 2),
+      HP.emit('e1', 3, 4),
+      HP.emit('e2', 5, 6, 7)
+    ]).then(() => {
+      spy.should.have.been.calledWith({
+        e: [1, 2],
+        e1: [3, 4],
+        e2: [5, 6, 7]
+      });
+    });
   });
 });
 
@@ -120,6 +154,36 @@ suite('onceAfter()', () => {
     HP.onceAfter('e', spy);
     return Promise.all([HP.emit('e'), HP.emit('e')])
       .then(() => spy.should.have.been.calledOnce);
+  });
+});
+
+suite('triggers()', () => {
+  teardown(() => {
+    HP.off('e1');
+    HP.off('e2');
+  });
+
+  test('the array of events are triggered by another event', () => {
+    let spyA = sinon.spy();
+    let spyB = sinon.spy();
+    HP.on('e1', spyA);
+    HP.on('e1', spyB);
+    HP.on('e2', spyA);
+    HP.on('e2', spyB);
+    HP.trigger('e', ['e1', 'e2']);
+    return HP.emit('e').then(() => {
+      spyA.should.have.been.calledTwice;
+      spyB.should.have.been.calledTwice;
+    });
+  });
+
+  test('the data is passed from the trigger to the tiggered', () => {
+    let spy = sinon.spy();
+    HP.on('e1', spy);
+    HP.trigger('e', ['e1']);
+    return HP.emit('e', 'foo', 'bar').then(() => {
+      spy.should.have.been.calledWith('e1', 'foo', 'bar');
+    });
   });
 });
 
