@@ -47,17 +47,24 @@ function after(message, fn) {
 }
 
 function all(messages, fn) {
-  let toDo = messages.length;
-  let dataCollection = {};
-  let subscriber = (message, ...data) => {
+  let toDo;
+  let dataCollection;
+  init();
+
+  function subscriber(message, ...data) {
     dataCollection[message] = data;
     toDo--;
     if (!toDo) {
       fn(dataCollection);
-      toDo = messages.length;
+      init();
     }
-  };
-  messages.forEach(message => on(message, subscriber));
+  }
+
+  function init() {
+    toDo = messages.length;
+    dataCollection = {};
+    messages.forEach(message => once(message, subscriber));
+  }
 }
 
 function off(message, fn) {

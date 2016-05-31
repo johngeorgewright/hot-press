@@ -84,19 +84,23 @@ suite('all()', () => {
     HP.all(['e', 'e1', 'e2'], spy);
   });
 
-  teardown(() => HP.off('e1, e2'));
+  teardown(() => Promise.all([
+    HP.off('e1'),
+    HP.off('e2')
+  ]));
 
-  test('is called once all events have been published', () => {
-    return HP.emit('e')
+  test('is called once all events have been published', () => (
+    HP.emit('e')
       .then(() => spy.should.not.have.been.called)
+      .then(() => HP.emit('e1'))
       .then(() => HP.emit('e1'))
       .then(() => spy.should.not.have.been.called)
       .then(() => HP.emit('e2'))
-      .then(() => spy.should.have.been.calledOnce);
-  });
+      .then(() => spy.should.have.been.calledOnce)
+  ));
 
-  test('that the data and event names have been passed to the subscriber', () => {
-    return Promise.all([
+  test('that the data and event names have been passed to the subscriber', () => (
+    Promise.all([
       HP.emit('e', 1, 2),
       HP.emit('e1', 3, 4),
       HP.emit('e2', 5, 6, 7)
@@ -106,8 +110,8 @@ suite('all()', () => {
         e1: [3, 4],
         e2: [5, 6, 7]
       });
-    });
-  });
+    })
+  ));
 });
 
 suite('off()', () => {
@@ -168,7 +172,8 @@ suite('onceBefore()', () => {
   test('it will only subscribe to the first event', () => {
     let spy = sinon.spy();
     HP.onceBefore('e', spy);
-    return Promise.all([HP.emit('e'), HP.emit('e')])
+    return Promise
+      .all([HP.emit('e'), HP.emit('e')])
       .then(() => spy.should.have.been.calledOnce);
   });
 });
@@ -183,7 +188,8 @@ suite('onceAfter()', () => {
   test('subscribes only to the first event', () => {
     let spy = sinon.spy();
     HP.onceAfter('e', spy);
-    return Promise.all([HP.emit('e'), HP.emit('e')])
+    return Promise
+      .all([HP.emit('e'), HP.emit('e')])
       .then(() => spy.should.have.been.calledOnce);
   });
 });
