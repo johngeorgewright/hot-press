@@ -3,20 +3,20 @@
 let subscriptions = {};
 
 function getSubscriptionsFor(message) {
-  if (!subscriptions[message]) subscriptions[message] = [];
+  if (!subscriptions[message]) subscriptions[message] = {
+    before: [],
+    on: [],
+    after: []
+  };
   return subscriptions[message];
 }
 
-function beforeMessage(message) {
-  return `before ${message}`;
-}
-
-function afterMessage(message) {
-  return `after ${message}`;
+function onPart(message, part, fn) {
+  getSubscriptionsFor(message)[part].push(fn);
 }
 
 function on(message, fn) {
-  getSubscriptionsFor(message).push(fn);
+  onPart(message, 'on', fn);
 }
 
 function all(messages, fn) {
@@ -34,18 +34,18 @@ function all(messages, fn) {
 }
 
 function before(message, fn) {
-  on(beforeMessage(message), fn);
+  onPart(message, 'before', fn);
 }
 
 function after(message, fn) {
-  on(afterMessage(message), fn);
+  onPart(message, 'after', fn);
 }
 
 function off(message, fn) {
-  let messages = [beforeMessage(message), message, afterMessage(message)];
   if (fn) {
-    for (let i = 0; i < messages.length; i++) {
-      let set = getSubscriptionsFor(messages[i]);
+    let subscriptions = getSubscriptionsFor(message);
+    for (let key in subscriptions) {
+      let set = subscriptions[key];
       let index = set.indexOf(fn);
       if (index !== -1) {
         set.splice(index, 1);
@@ -53,37 +53,38 @@ function off(message, fn) {
       }
     }
   } else {
-    messages.forEach(message => getSubscriptionsFor(message).length = 0);
+    delete subscriptions[message];
   }
 }
 
-function once(message, fn) {
+function oncePart(message, subscribe, fn) {
   let subscription = (...args) => {
     off(message, subscription);
     return fn(...args);
   };
-  on(message, subscription);
+  subscribe(message, subscription);
+}
+
+function once(message, fn) {
+  oncePart(message, on, fn);
 }
 
 function onceBefore(message, fn) {
-  return once(beforeMessage(message), fn);
+  oncePart(message, before, fn);
 }
 
 function onceAfter(message, fn) {
-  return once(afterMessage(message), fn);
-}
-
-function createEmitter(...data) {
-  return message => Promise.all(
-    getSubscriptionsFor(message).map(fn => fn(message, ...data))
-  );
+  oncePart(message, after, fn);
 }
 
 function emit(message, ...data) {
-  let emit = createEmitter(...data);
-  return emit(beforeMessage(message))
-    .then(() => emit(message))
-    .then(() => emit(afterMessage(message)));
+  let subscriptions = getSubscriptionsFor(message);
+  let emit = part => Promise.all(
+    subscriptions[part].map(fn => fn(message, ...data))
+  );
+  return emit('before')
+    .then(() => emit('on'))
+    .then(() => emit('after'));
 }
 
 function trigger(trigger, messages) {
