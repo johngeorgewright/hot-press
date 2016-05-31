@@ -98,7 +98,7 @@ function onceAfter(message, fn) {
 function createEmitter(message, data) {
   let subscriptions = getSubscriptionsFor(message);
   return part => Promise.all(flatten(
-    getHierachy(message).map(message => (
+    getHierachy(message).map(() => (
       subscriptions[part].map(fn => fn(message, ...data))
     )
   )));

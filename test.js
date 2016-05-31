@@ -34,6 +34,8 @@ suite('emit()', () => {
     HP.on('e', spy);
     return HP.emit('e.f')
       .then(() => spy.should.have.been.calledTwice)
+      .then(() => spy.getCall(0).should.have.been.calledWithExactly('e.f'))
+      .then(() => spy.getCall(1).should.have.been.calledWithExactly('e.f'))
       .then(() => HP.off('e.f'));
   });
 });
