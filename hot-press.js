@@ -111,7 +111,7 @@ function emit(message, ...data) {
     .then(() => emit(AFTER));
 }
 
-function trigger(trigger, messages) {
+function triggers(trigger, messages) {
   on(trigger, (_, ...data) => (
     messages.map(message => emit(message, ...data))
   ));
@@ -122,5 +122,5 @@ function flatten(arr) {
 }
 
 Object.assign(exports, {
-  after, all, before, emit, off, on, once, onceAfter, onceBefore, trigger
+  after, all, before, emit, off, on, once, onceAfter, onceBefore, triggers
 });

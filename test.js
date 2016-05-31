@@ -201,7 +201,7 @@ suite('triggers()', () => {
     HP.on('e1', spyB);
     HP.on('e2', spyA);
     HP.on('e2', spyB);
-    HP.trigger('e', ['e1', 'e2']);
+    HP.triggers('e', ['e1', 'e2']);
     return HP.emit('e').then(() => {
       spyA.should.have.been.calledTwice;
       spyB.should.have.been.calledTwice;
@@ -211,7 +211,7 @@ suite('triggers()', () => {
   test('the data is passed from the trigger to the tiggered', () => {
     let spy = sinon.spy();
     HP.on('e1', spy);
-    HP.trigger('e', ['e1']);
+    HP.triggers('e', ['e1']);
     return HP.emit('e', 'foo', 'bar').then(() => {
       spy.should.have.been.calledWith('e1', 'foo', 'bar');
     });
