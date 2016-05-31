@@ -1,6 +1,6 @@
 {
   "name": "hot-press",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "PubSub library with extra asynchronous handling",
   "main": "hot-press.js",
   "scripts": {
