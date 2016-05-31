@@ -4,10 +4,11 @@
   "description": "PubSub library with extra asynchronous handling",
   "main": "hot-press.js",
   "scripts": {
+    "cover": "cat ./coverage/lcov.info | coveralls && rm -rf ./coverage",
     "lint": "eslint hot-press.js test.js",
     "lint-w": "nodemon -x 'npm run lint'",
     "prepublish": "npm test",
-    "spec": "istanbul cover _mocha -- --ui tdd --check-leaks",
+    "spec": "istanbul cover _mocha --report lcovonly -- --ui tdd --check-leaks",
     "spec-w": "npm run cover -- --watch --growl --reporter dot",
     "test": "npm run lint && npm run spec"
   },
@@ -15,9 +16,11 @@
   "license": "ISC",
   "devDependencies": {
     "chai": "^3.5.0",
+    "coveralls": "^2.11.9",
     "eslint": "^2.10.2",
     "istanbul": "^0.4.3",
     "mocha": "^2.4.5",
+    "mocha-lcov-reporter": "^1.2.0",
     "sinon": "^1.17.4",
     "sinon-chai": "^2.8.0"
   }

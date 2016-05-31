@@ -2,6 +2,8 @@
 
 > PubSub library with extra asynchronous handling
 
+[![Coverage Status](https://coveralls.io/repos/github/johngeorgewright/hot-press/badge.svg?branch=master)](https://coveralls.io/github/johngeorgewright/hot-press?branch=master)
+
 ## Installation
 
 This is built in ECMAScript 6 with no precompiling. If you require this in
