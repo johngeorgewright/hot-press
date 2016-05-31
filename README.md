@@ -1,9 +1,9 @@
 # hot-press <small>beta</small>
 
-> PubSub library with extra asynchronous handling
-
 [![Coverage Status](https://coveralls.io/repos/github/johngeorgewright/hot-press/badge.svg?branch=master)](https://coveralls.io/github/johngeorgewright/hot-press?branch=master)
 [![Build Status](https://travis-ci.org/johngeorgewright/hot-press.svg?branch=master)](https://travis-ci.org/johngeorgewright/hot-press)
+
+> PubSub library with extra asynchronous handling
 
 ## Installation
 
