@@ -3,7 +3,7 @@
 const ON = 'on';
 const BEFORE = 'before';
 const AFTER = 'after';
-const HIERACHY_SEPARATOR = '.';
+const HIERARCHY_SEPARATOR = '.';
 
 let subscriptions = {};
 
@@ -16,19 +16,19 @@ function getSubscriptionsFor(message) {
   return subscriptions[message];
 }
 
-function getHierachy(message) {
-  let parts = message.split(HIERACHY_SEPARATOR);
-  let hierachy = [parts[0]];
+function getHierarchy(message) {
+  let parts = message.split(HIERARCHY_SEPARATOR);
+  let hierarchy = [parts[0]];
   parts.reduce((message, part) => {
-    message += HIERACHY_SEPARATOR + part;
-    hierachy.push(message);
+    message += HIERARCHY_SEPARATOR + part;
+    hierarchy.push(message);
     return message;
   });
-  return hierachy.reverse();
+  return hierarchy.reverse();
 }
 
 function onPart(part, message, fn) {
-  getHierachy(message).forEach(message => {
+  getHierarchy(message).forEach(message => {
     getSubscriptionsFor(message)[part].push(fn);
   });
 }
@@ -98,7 +98,7 @@ function onceAfter(message, fn) {
 function createEmitter(message, data) {
   let subscriptions = getSubscriptionsFor(message);
   return part => Promise.all(flatten(
-    getHierachy(message).map(() => (
+    getHierarchy(message).map(() => (
       subscriptions[part].map(fn => fn(message, ...data))
     )
   )));

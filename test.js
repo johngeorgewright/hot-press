@@ -28,7 +28,7 @@ suite('emit()', () => {
     return HP.emit('e').then(() => spy.should.have.been.calledThrice);
   });
 
-  test('subscription hierachy', () => {
+  test('subscription hierarchy', () => {
     let spy = sinon.spy();
     HP.on('e.f', spy);
     HP.on('e', spy);
