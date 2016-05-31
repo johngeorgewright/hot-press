@@ -9,7 +9,7 @@ not, we use 2 space indentation and a final new line.
 
 If your editor can't read and understand eslint configuration, you can lint your
 files by running `npm run lint`. If you would like to keep running and checking
-your files as you change them, run `npm run lint-w`.
+your files as you change them, run `npm i -g nodemon && npm run lint-w`.
 
 ## Git Commit Styleguide
 
