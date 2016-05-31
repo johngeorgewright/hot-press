@@ -160,7 +160,7 @@ subscribers from the event.
 
 ### `on(String eventName, Function subscriber)`
 
-Register a subcribing function to the event
+Register a subscribing function to the event
 
 ### `once(String eventName, Function subscriber)`
 

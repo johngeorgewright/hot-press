@@ -9,7 +9,7 @@
     "lint-w": "nodemon -x 'npm run lint'",
     "prepublish": "npm test",
     "spec": "istanbul cover _mocha --report lcovonly -- --ui tdd --check-leaks",
-    "spec-w": "npm run cover -- --watch --growl --reporter dot",
+    "spec-w": "npm run spec -- --watch --growl --reporter dot",
     "test": "npm run lint && npm run spec"
   },
   "author": "John Wright <johngeorge.wright@gmail.com>",
