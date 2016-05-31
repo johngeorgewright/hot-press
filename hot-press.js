@@ -1,22 +1,48 @@
 'use strict';
 
+const ON = 'on';
+const BEFORE = 'before';
+const AFTER = 'after';
+const HIERACHY_SEPARATOR = '.';
+
 let subscriptions = {};
 
 function getSubscriptionsFor(message) {
   if (!subscriptions[message]) subscriptions[message] = {
-    before: [],
-    on: [],
-    after: []
+    [BEFORE]: [],
+    [ON]: [],
+    [AFTER]: []
   };
   return subscriptions[message];
 }
 
-function onPart(message, part, fn) {
-  getSubscriptionsFor(message)[part].push(fn);
+function getHierachy(message) {
+  let parts = message.split(HIERACHY_SEPARATOR);
+  let hierachy = [parts[0]];
+  parts.reduce((message, part) => {
+    message += HIERACHY_SEPARATOR + part;
+    hierachy.push(message);
+    return message;
+  });
+  return hierachy.reverse();
+}
+
+function onPart(part, message, fn) {
+  getHierachy(message).forEach(message => {
+    getSubscriptionsFor(message)[part].push(fn);
+  });
 }
 
 function on(message, fn) {
-  onPart(message, 'on', fn);
+  onPart(ON, message, fn);
+}
+
+function before(message, fn) {
+  onPart(BEFORE, message, fn);
+}
+
+function after(message, fn) {
+  onPart(AFTER, message, fn);
 }
 
 function all(messages, fn) {
@@ -31,14 +57,6 @@ function all(messages, fn) {
     }
   };
   messages.forEach(message => on(message, subscriber));
-}
-
-function before(message, fn) {
-  onPart(message, 'before', fn);
-}
-
-function after(message, fn) {
-  onPart(message, 'after', fn);
 }
 
 function off(message, fn) {
@@ -57,40 +75,50 @@ function off(message, fn) {
   }
 }
 
-function oncePart(message, subscribe, fn) {
-  let subscription = (...args) => {
-    off(message, subscription);
+function oncePart(subscribe, message, fn) {
+  let subscriber = (...args) => {
+    off(message, subscriber);
     return fn(...args);
   };
-  subscribe(message, subscription);
+  subscribe(message, subscriber);
 }
 
 function once(message, fn) {
-  oncePart(message, on, fn);
+  oncePart(on, message, fn);
 }
 
 function onceBefore(message, fn) {
-  oncePart(message, before, fn);
+  oncePart(before, message, fn);
 }
 
 function onceAfter(message, fn) {
-  oncePart(message, after, fn);
+  oncePart(after, message, fn);
+}
+
+function createEmitter(message, data) {
+  let subscriptions = getSubscriptionsFor(message);
+  return part => Promise.all(flatten(
+    getHierachy(message).map(message => (
+      subscriptions[part].map(fn => fn(message, ...data))
+    )
+  )));
 }
 
 function emit(message, ...data) {
-  let subscriptions = getSubscriptionsFor(message);
-  let emit = part => Promise.all(
-    subscriptions[part].map(fn => fn(message, ...data))
-  );
-  return emit('before')
-    .then(() => emit('on'))
-    .then(() => emit('after'));
+  let emit = createEmitter(message, data);
+  return emit(BEFORE)
+    .then(() => emit(ON))
+    .then(() => emit(AFTER));
 }
 
 function trigger(trigger, messages) {
   on(trigger, (_, ...data) => (
     messages.map(message => emit(message, ...data))
   ));
+}
+
+function flatten(arr) {
+  return arr.reduce((a, b) => a.concat(b));
 }
 
 Object.assign(exports, {

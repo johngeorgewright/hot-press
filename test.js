@@ -27,6 +27,15 @@ suite('emit()', () => {
     HP.after('e', resolve);
     return HP.emit('e').then(() => spy.should.have.been.calledThrice);
   });
+
+  test('subscription hierachy', () => {
+    let spy = sinon.spy();
+    HP.on('e.f', spy);
+    HP.on('e', spy);
+    return HP.emit('e.f')
+      .then(() => spy.should.have.been.calledTwice)
+      .then(() => HP.off('e.f'));
+  });
 });
 
 suite('on()', () => {
