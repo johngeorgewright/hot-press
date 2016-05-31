@@ -1,4 +1,4 @@
-# hot-press
+# hot-press <small>beta</small>
 
 > PubSub library with extra asynchronous handling
 
