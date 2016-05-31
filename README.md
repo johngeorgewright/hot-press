@@ -27,6 +27,19 @@ on('event', (eventName, ...data) => console.log(...data));
 emit('event', 'some', 'variables'); // 'some' 'variables'
 ```
 
+### Subscribing to multiple events
+
+Using the `all` function you can trigger a subscriber only once all the events
+have been emitted.
+
+```javascript
+import {emit, all} from 'hot-press';
+
+all(['event1', 'event2'], () => console.log('Triggered!'));
+emit('event1');
+emit('event2'); // 'Triggered!'
+```
+
 ### Subscription hierarchy
 
 Dots symbolize subscription hierarchy.
