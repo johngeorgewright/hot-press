@@ -23,8 +23,20 @@ function.
 ```javascript
 import {emit, on} from 'hot-press';
 
-on('event', (...data) => console.log(...data));
+on('event', (message, ...data) => console.log(...data));
 emit('event', 'some', 'variables'); // 'some' 'variables'
+```
+
+### Subscription hierarchy
+
+Dots symbolize subscription hierarchy.
+
+```javascript
+import {emit, on} from 'hot-press';
+
+on('foo.bar', message => console.log(message));
+on('foo', message => console.log(message));
+emit('foo.bar'); // 'foo.bar' 'foo.bar'
 ```
 
 ### Unsubscribe
