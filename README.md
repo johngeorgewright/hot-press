@@ -23,7 +23,7 @@ function.
 ```javascript
 import {emit, on} from 'hot-press';
 
-on('event', (message, ...data) => console.log(...data));
+on('event', (eventName, ...data) => console.log(...data));
 emit('event', 'some', 'variables'); // 'some' 'variables'
 ```
 
