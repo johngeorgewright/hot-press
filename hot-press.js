@@ -16,21 +16,22 @@ function getSubscriptionsFor(message) {
   return subscriptions[message];
 }
 
-function getHierarchy(message) {
+function getHierarchy(message, addWildcards) {
   let parts = message.split(HIERARCHY_SEPARATOR);
   let hierarchy = [parts[0]];
+  if (addWildcards) hierarchy.unshift('*');
   parts.reduce((message, part) => {
-    message += HIERARCHY_SEPARATOR + part;
-    hierarchy.push(message);
-    return message;
+    let newMessage = message + HIERARCHY_SEPARATOR + part;
+    if (addWildcards)
+      hierarchy.push(message + HIERARCHY_SEPARATOR + '*');
+    hierarchy.push(newMessage);
+    return newMessage;
   });
   return hierarchy.reverse();
 }
 
 function onPart(part, message, fn) {
-  getHierarchy(message).forEach(message => {
-    getSubscriptionsFor(message)[part].push(fn);
-  });
+  getSubscriptionsFor(message)[part].push(fn);
 }
 
 function on(message, fn) {
@@ -96,12 +97,11 @@ function onceAfter(message, fn) {
 }
 
 function createEmitter(message, data) {
-  let subscriptions = getSubscriptionsFor(message);
+  let call = fn => fn(message, ...data);
+  let hierarchy = getHierarchy(message, true);
   return part => Promise.all(flatten(
-    getHierarchy(message).map(() => (
-      subscriptions[part].map(fn => fn(message, ...data))
-    )
-  )));
+    hierarchy.map(message => getSubscriptionsFor(message)[part].map(call))
+  ));
 }
 
 function emit(message, ...data) {

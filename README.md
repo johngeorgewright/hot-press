@@ -55,6 +55,18 @@ on('foo', message => console.log(message));
 emit('foo.bar'); // 'foo.bar' 'foo.bar'
 ```
 
+### Subscribing with wildcards
+
+Using the `*` operator, you can subscribe to all events.
+
+```javascript
+import {emit, on} from 'hot-press';
+
+on('*', () => console.log(2));
+on('e.*', () => console.log(1));
+emit('e.f'); // 1 2
+```
+
 ### Unsubscribe
 
 Remove all or specific subscribers from events using the `off()` function.
