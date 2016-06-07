@@ -1,5 +1,7 @@
 'use strict';
 
+const flatten = require('lodash.flatten');
+
 const ON = 'on';
 const BEFORE = 'before';
 const AFTER = 'after';
@@ -127,10 +129,6 @@ function triggers(trigger, messages) {
   on(trigger, (_, ...data) => (
     messages.map(message => emit(message, ...data))
   ));
-}
-
-function flatten(arr) {
-  return arr.reduce((a, b) => a.concat(b));
 }
 
 Object.assign(exports, {
