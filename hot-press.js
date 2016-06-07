@@ -67,20 +67,25 @@ function all(messages, fn) {
   }
 }
 
-function off(message, fn) {
-  if (fn) {
-    let subscriptions = getSubscriptionsFor(message);
-    for (let key in subscriptions) {
-      let set = subscriptions[key];
-      let index = set.indexOf(fn);
-      if (index !== -1) {
-        set.splice(index, 1);
-        break;
-      }
+function removeListener(message, fn) {
+  let subscriptions = getSubscriptionsFor(message);
+  for (let key in subscriptions) {
+    let set = subscriptions[key];
+    let index = set.indexOf(fn);
+    if (index !== -1) {
+      set.splice(index, 1);
+      break;
     }
-  } else {
-    delete subscriptions[message];
   }
+}
+
+function removeAllListeners(message) {
+  delete subscriptions[message];
+}
+
+function off(message, fn) {
+  if (fn) removeListener(message, fn);
+  else removeAllListeners(message);
 }
 
 function oncePart(subscribe, message, fn) {
