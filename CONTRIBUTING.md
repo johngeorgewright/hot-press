@@ -24,7 +24,7 @@ your files as you change them, run `npm i -g nodemon && npm run lint-w`.
 
 ## Git Commit Styleguide
 
-Refere to [atom's guidelines](https://github.com/atom/atom/blob/master/CONTRIBUTING.md#git-commit-messages)
+Refer to [atom's guidelines](https://github.com/atom/atom/blob/master/CONTRIBUTING.md#git-commit-messages)
 
 ## Submitting changes
 
