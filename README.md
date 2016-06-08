@@ -129,7 +129,7 @@ And finally the `emit` function will return a promise that will resolve once
 the "after" part of the lifecycle has resolved.
 
 ```javascript
-import {before, emit, on} from 'hot-press';
+import {after, before, emit, on} from 'hot-press';
 
 before('event', eventuallyLog(1));
 on('event', eventuallyLog(2));
@@ -139,11 +139,16 @@ emit('event').then(() => console.log(4));
 
 function eventuallyLog(num) {
   return () => new Promise(resolve => {
-    setTimeout(() => {
+    let log = () => {
       console.log(num);
       resolve();
-    }, 100);
+    };
+    setTimeout(log, random());
   });
+}
+
+function random(from=0, to=1000) {
+  return Math.floor(Math.random() * to) + from;
 }
 ```
 
