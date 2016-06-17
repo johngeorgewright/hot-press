@@ -2,7 +2,7 @@
 /*eslint-env mocha*/
 
 const chai = require('chai');
-const HP = require('./hot-press');
+const HP = require('./hot-press.src');
 const sinon = require('sinon');
 const sinonChai = require('sinon-chai');
 
