@@ -78,7 +78,7 @@ function on(message, fn) {
 }
 
 /**
- * Adds a listener to the end of the event lifecycle.
+ * Adds a listener to the beginning of the event lifecycle.
  *
  * @param String message
  * @param Function fn
@@ -99,7 +99,7 @@ function after(message, fn) {
 
 /**
  * Will call the listener once each of the specified events have been emitted.
- * The listeners are given as an object, where each key will specify the part of
+ * The events are given as an object, where each key will specify the part of
  * the event lifecycle and the value is an array of event names/messages.
  *
  * ```
@@ -118,9 +118,9 @@ function after(message, fn) {
 function all(messages, fn) {
   let toDo;
   let dataCollection;
-  let allMessages = Object
+  let size = Object
     .keys(messages)
-    .reduce((all, part) => all.concat(messages[part]), []);
+    .reduce((size, part) => size + messages[part].length, 0);
 
   init();
 
@@ -140,7 +140,7 @@ function all(messages, fn) {
   }
 
   function init() {
-    toDo = allMessages.length;
+    toDo = size;
     dataCollection = {};
     registerSubscribers('before', onceBefore);
     registerSubscribers('on', once);
@@ -272,17 +272,51 @@ function emit(message, ...data) {
 }
 
 /**
+ * Subscribes emittion of an array of events to another event. All data will be
+ * passed to the emittions.
+ *
+ * @param Function subscribe
+ * @param String message
+ * @param String[] triggers
+ */
+function triggersPart(subscribe, message, triggers) {
+  subscribe(message, (_, ...data) => (
+    triggers.map(message => emit(message, ...data))
+  ));
+}
+
+/**
  * Registering that one event will trigger another, passing all data.
  *
  * @param String trigger
  * @param String[] messages
  */
 function triggers(trigger, messages) {
-  on(trigger, (_, ...data) => (
-    messages.map(message => emit(message, ...data))
-  ));
+  triggersPart(on, trigger, messages);
+}
+
+function triggersAfter(trigger, messages) {
+  triggersPart(after, trigger, messages);
+}
+
+function triggersBefore(trigger, messages) {
+  triggersPart(before, trigger, messages);
+}
+
+function triggersOnce(trigger, messages) {
+  triggersPart(once, trigger, messages);
+}
+
+function triggersOnceAfter(trigger, messages) {
+  triggersPart(onceAfter, trigger, messages);
+}
+
+function triggersOnceBefore(trigger, messages) {
+  triggersPart(onceBefore, trigger, messages);
 }
 
 Object.assign(exports, {
-  after, all, before, emit, off, on, once, onceAfter, onceBefore, triggers
+  after, all, before, emit, off, on, once, onceAfter, onceBefore, triggers,
+  triggersAfter, triggersBefore, triggersOnce, triggersOnceAfter,
+  triggersOnceBefore
 });
