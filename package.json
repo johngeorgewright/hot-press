@@ -6,7 +6,7 @@
   "scripts": {
     "build": "babel hot-press.src.js --out-file hot-press.js --presets es2015",
     "cover": "cat ./coverage/lcov.info | coveralls && rm -rf ./coverage",
-    "lint": "eslint hot-press.js test.js",
+    "lint": "eslint hot-press.src.js test.js",
     "lint-w": "nodemon -x 'npm run lint'",
     "prepublish": "npm test && npm run build",
     "spec": "istanbul cover _mocha --report lcovonly -- --ui tdd --check-leaks",
