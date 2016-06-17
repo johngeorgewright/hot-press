@@ -280,7 +280,7 @@ function emit(message, ...data) {
  * @param String[] triggers
  */
 function triggersPart(subscribe, message, triggers) {
-  subscribe(message, (_, ...data) => (
+  subscribe(message, (_, ...data) => Promise.all(
     triggers.map(message => emit(message, ...data))
   ));
 }

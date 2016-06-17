@@ -9,7 +9,11 @@ const sinonChai = require('sinon-chai');
 chai.use(sinonChai);
 chai.should();
 
-teardown(() => HP.off('e'));
+teardown(() => {
+  HP.off('e');
+  HP.off('e1');
+  HP.off('e2');
+});
 
 suite('emit()', () => {
   test('it returns a promise', () => {
@@ -230,6 +234,70 @@ suite('triggers()', () => {
     return HP.emit('e', 'foo', 'bar').then(() => {
       spy.should.have.been.calledWith('e1', 'foo', 'bar');
     });
+  });
+});
+
+suite('triggersAfter()', () => {
+  test('it subscribes to after the event life cycle', testAfterSubscriptions((message, spy) => {
+    HP.on('e1', spy);
+    HP.triggersAfter(message, ['e1']);
+  }));
+});
+
+suite('triggersBefore()', () => {
+  test('it subscribes to the beginning of the event life cycle', testBeforeSubscriptions((message, spy) => {
+    HP.on('e1', spy);
+    HP.triggersBefore(message, ['e1']);
+  }));
+
+  test('it can pause the next part of the event life cycle', testBeforePause((message, wait) => {
+    HP.on('e1', wait);
+    HP.triggersBefore(message, ['e1']);
+  }));
+});
+
+suite('triggersOnce()', () => {
+  test('it subscribes only to the first event', () => {
+    let spy = sinon.spy();
+    HP.on('e1', spy);
+    HP.triggersOnce('e', ['e1']);
+    return Promise.all([HP.emit('e'), HP.emit('e')])
+      .then(() => spy.should.have.been.calledOnce);
+  });
+});
+
+suite('triggersOnceBefore()', () => {
+  test('it subscribes to the beginning of the event life cycle', testBeforeSubscriptions((message, spy) => {
+    HP.on('e1', spy);
+    HP.triggersOnceBefore(message, ['e1']);
+  }));
+
+  test('it can pause the next part of the event life cycle', testBeforePause((message, wait) => {
+    HP.on('e1', wait);
+    HP.triggersOnceBefore(message, ['e1']);
+  }));
+
+  test('it subscribes only to the first event', () => {
+    let spy = sinon.spy();
+    HP.on('e1', spy);
+    HP.triggersOnceBefore('e', ['e1']);
+    return Promise.all([HP.emit('e'), HP.emit('e')])
+      .then(() => spy.should.have.been.calledOnce);
+  });
+});
+
+suite('triggersOnceAfter()', () => {
+  test('it subscribes to after the event life cycle', testAfterSubscriptions((message, spy) => {
+    HP.on('e1', spy);
+    HP.triggersOnceAfter(message, ['e1']);
+  }));
+
+  test('it subscribes only to the first event', () => {
+    let spy = sinon.spy();
+    HP.on('e1', spy);
+    HP.triggersOnceAfter('e', ['e1']);
+    return Promise.all([HP.emit('e'), HP.emit('e')])
+      .then(() => spy.should.have.been.calledOnce);
   });
 });
 
