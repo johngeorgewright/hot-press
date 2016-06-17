@@ -115,14 +115,18 @@ before('event', () => console.log(1));
 on('event', () => console.log(2));
 after('event', () => console.log(3));
 emit('event');
-// 1 2 3
+// 1
+// 2
+// 3
 off('event');
 
 after('event', () => console.log(3));
 before('event', () => console.log(1));
 on('event', () => console.log(2));
 emit('event');
-// 1 2 3
+// 1
+// 2
+// 3
 ```
 
 ### Asynchronous subscriptions
@@ -145,7 +149,10 @@ before('event', eventuallyLog(1));
 on('event', eventuallyLog(2));
 after('event', eventuallyLog(3));
 emit('event').then(() => console.log(4));
-// 1 2 3 4
+// 1
+// 2
+// 3
+// 4
 
 function eventuallyLog(num) {
   return () => new Promise(resolve => {
