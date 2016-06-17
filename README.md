@@ -38,7 +38,7 @@ have been emitted.
 ```javascript
 import {emit, all} from 'hot-press';
 
-all(['event1', 'event2'], () => console.log('Triggered!'));
+all({on: ['event1', 'event2']}, () => console.log('Triggered!'));
 emit('event1');
 emit('event2'); // 'Triggered!'
 ```
@@ -153,7 +153,7 @@ function eventuallyLog(num) {
 
 Register a subscribing function to the end of the event.
 
-### `all(Array eventNames, Function subscriber)`
+### `all(Object<before: String[], on: String[], after: String[]> eventNames, Function subscriber)`
 
 Register a subscriber for when all events have been published
 

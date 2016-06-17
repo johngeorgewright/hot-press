@@ -81,12 +81,14 @@ suite('all()', () => {
 
   setup(() => {
     spy = sinon.spy();
-    HP.all(['e', 'e1', 'e2'], spy);
+    HP.all({before: ['e4'], on: ['e', 'e1', 'e2'], after: ['e3']}, spy);
   });
 
   teardown(() => Promise.all([
     HP.off('e1'),
-    HP.off('e2')
+    HP.off('e2'),
+    HP.off('e3'),
+    HP.off('e4')
   ]));
 
   test('is called once all events have been published', () => (
@@ -96,6 +98,9 @@ suite('all()', () => {
       .then(() => HP.emit('e1'))
       .then(() => spy.should.not.have.been.called)
       .then(() => HP.emit('e2'))
+      .then(() => HP.emit('e3'))
+      .then(() => spy.should.not.have.been.called)
+      .then(() => HP.emit('e4'))
       .then(() => spy.should.have.been.calledOnce)
   ));
 
@@ -103,12 +108,16 @@ suite('all()', () => {
     Promise.all([
       HP.emit('e', 1, 2),
       HP.emit('e1', 3, 4),
-      HP.emit('e2', 5, 6, 7)
+      HP.emit('e2', 5, 6, 7),
+      HP.emit('e3', 8),
+      HP.emit('e4', 9, 10)
     ]).then(() => {
       spy.should.have.been.calledWith({
         e: [1, 2],
         e1: [3, 4],
-        e2: [5, 6, 7]
+        e2: [5, 6, 7],
+        e3: [8],
+        e4: [9, 10]
       });
     })
   ));

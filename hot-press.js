@@ -1,53 +1,127 @@
 'use strict';
 
 const flatten = require('lodash.flatten');
-
 const ON = 'on';
 const BEFORE = 'before';
 const AFTER = 'after';
 const HIERARCHY_SEPARATOR = '.';
 
-let subscriptions = {};
+/**
+ * Listeners by event.
+ *
+ * [message]: {
+ *   before: ...Function,
+ *   on: ...Function,
+ *   after: ...Function,
+ * }
+ *
+ * @var Object
+ */
+let listeners = {};
 
-function getSubscriptionsFor(message) {
-  if (!subscriptions[message]) subscriptions[message] = {
+/**
+ * Returns all the listeners for a given message. The returned value will be an
+ * object whose keys are 'before', 'on' and 'after' of which each will contain
+ * an array of functions/listeners.
+ *
+ * @param String message
+ * @return Object
+ */
+function getListenersFor(message) {
+  if (!listeners[message]) listeners[message] = {
     [BEFORE]: [],
     [ON]: [],
     [AFTER]: []
   };
-  return subscriptions[message];
+  return listeners[message];
 }
 
+/**
+ * Returns a list of messages that should be called in order for a specific
+ * message
+ *
+ * @param String message
+ * @return String[]
+ */
 function getHierarchy(message) {
   let parts = message.split(HIERARCHY_SEPARATOR);
   let hierarchy = [parts[0], '*'];
   parts.reduce((message, part) => {
-    let newMessage = message + HIERARCHY_SEPARATOR + part;
-    hierarchy.unshift(newMessage, message + HIERARCHY_SEPARATOR + '*');
+    let prefix = message + HIERARCHY_SEPARATOR;
+    let newMessage = prefix + part;
+    let wildcard = prefix + '*';
+    hierarchy.unshift(newMessage, wildcard);
     return newMessage;
   });
   return hierarchy;
 }
 
+/**
+ * Adds a listener to a specific part of an event's lifecycle.
+ *
+ * @param String part
+ * @param String message
+ * @param Function fn
+ */
 function onPart(part, message, fn) {
-  getSubscriptionsFor(message)[part].push(fn);
+  getListenersFor(message)[part].push(fn);
 }
 
+/**
+ * Adds a listener to the event.
+ *
+ * @param String message
+ * @param Function fn
+ */
 function on(message, fn) {
   onPart(ON, message, fn);
 }
 
+/**
+ * Adds a listener to the end of the event lifecycle.
+ *
+ * @param String message
+ * @param Function fn
+ */
 function before(message, fn) {
   onPart(BEFORE, message, fn);
 }
 
+/**
+ * Adds a listener to the end of the event lifecycle.
+ *
+ * @param String message
+ * @param Function fn
+ */
 function after(message, fn) {
   onPart(AFTER, message, fn);
 }
 
+/**
+ * Will call the listener once each of the specified events have been emitted.
+ * The listeners are given as an object, where each key will specify the part of
+ * the event lifecycle and the value is an array of event names/messages.
+ *
+ * ```
+ * all({
+ *   before: ['foo', 'bar'],
+ *   on: ['another'],
+ *   after: ['event']
+ * }, ({foo, bar, another, event}) => {
+ *   // You'll receive data for each event that fired
+ * });
+ * ```
+ *
+ * @param Object<before: String[], on: String[], after: String[]> messages
+ * @param Function fn
+ */
 function all(messages, fn) {
   let toDo;
   let dataCollection;
+  let allMessages = Object
+    .keys(messages)
+    .reduce((all, part) => all.concat(messages[part]), []);
+
   init();
 
   function subscriber(message, ...data) {
@@ -59,34 +133,76 @@ function all(messages, fn) {
     }
   }
 
+  function registerSubscribers(prop, method) {
+    if (messages[prop]) messages[prop].forEach(message => {
+      method(message, subscriber);
+    });
+  }
+
   function init() {
-    toDo = messages.length;
+    toDo = allMessages.length;
     dataCollection = {};
-    messages.forEach(message => once(message, subscriber));
+    registerSubscribers('before', onceBefore);
+    registerSubscribers('on', once);
+    registerSubscribers('after', onceAfter);
   }
 }
 
+/**
+ * Removes a listener from a given event.
+ *
+ * @param String message
+ * @param Function fn
+ * @return Number
+ */
 function removeListener(message, fn) {
-  let subscriptions = getSubscriptionsFor(message);
-  for (let key in subscriptions) {
-    let set = subscriptions[key];
+  let listeners = getListenersFor(message);
+  let removed = 0;
+  for (let key in listeners) {
+    let set = listeners[key];
     let index = set.indexOf(fn);
     if (index !== -1) {
       set.splice(index, 1);
+      removed++;
       break;
     }
   }
+  return removed;
 }
 
+/**
+ * Removes all listeners from a given event.
+ *
+ * @param String message
+ * @return Number
+ */
 function removeAllListeners(message) {
-  delete subscriptions[message];
+  let all = listeners[message];
+  let amount = all ? all.length : 0;
+  delete listeners[message];
+  return amount;
 }
 
+/**
+ * Removes the specified listener from a given event. If no listener is
+ * specified, all will be removed.
+ *
+ * @param String message
+ * @param Function fn
+ * @return Number
+ */
 function off(message, fn) {
-  if (fn) removeListener(message, fn);
-  else removeAllListeners(message);
+  return fn ? removeListener(message, fn) : removeAllListeners(message);
 }
 
+/**
+ * Adds a listener to a specific part of the event lifecycle and removes it
+ * as soon as it's been called.
+ *
+ * @param Function subscribe
+ * @param String message
+ * @param Function fn
+ */
 function oncePart(subscribe, message, fn) {
   let subscriber = (...args) => {
     off(message, subscriber);
@@ -95,26 +211,59 @@ function oncePart(subscribe, message, fn) {
   subscribe(message, subscriber);
 }
 
+/**
+ * Adds the listener to the event for just one emittion.
+ *
+ * @param String message
+ * @param Function fn
+ */
 function once(message, fn) {
   oncePart(on, message, fn);
 }
 
+/**
+ * Adds a listener to the beginning of the event lifecycle for just one emittion.
+ *
+ * @param String message
+ * @param Function fn
+ */
 function onceBefore(message, fn) {
   oncePart(before, message, fn);
 }
 
+/**
+ * Adds a listener to the end of the event lifecycle for just one emittion.
+ *
+ * @param String message
+ * @param Function fn
+ */
 function onceAfter(message, fn) {
   oncePart(after, message, fn);
 }
 
+/**
+ * Creates an emitter based on the event name/message and data. The emitter
+ * can then be used to emit each part of the lifecycle.
+ *
+ * @param String message
+ * @param Any[] data
+ * @return Function
+ */
 function createEmitter(message, data) {
   let call = fn => fn(message, ...data);
   let hierarchy = getHierarchy(message);
   return part => Promise.all(flatten(
-    hierarchy.map(message => getSubscriptionsFor(message)[part].map(call))
+    hierarchy.map(message => getListenersFor(message)[part].map(call))
   ));
 }
 
+/**
+ * Fires off the lifecycle of an event.
+ *
+ * @param String message
+ * @param Any ...data
+ * @return Promise
+ */
 function emit(message, ...data) {
   let emit = createEmitter(message, data);
   return emit(BEFORE)
@@ -122,6 +271,12 @@ function emit(message, ...data) {
     .then(() => emit(AFTER));
 }
 
+/**
+ * Registering that one event will trigger another, passing all data.
+ *
+ * @param String trigger
+ * @param String[] messages
+ */
 function triggers(trigger, messages) {
   on(trigger, (_, ...data) => (
     messages.map(message => emit(message, ...data))
