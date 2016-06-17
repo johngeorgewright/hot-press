@@ -1,4 +1,4 @@
 coverage
-hot-press.js
+hot-press.src.js
 *.log
 node_modules

@@ -4,7 +4,7 @@
   "description": "PubSub library with extra asynchronous handling",
   "main": "hot-press.js",
   "scripts": {
-    "build": "browserify hot-press.js -o hot-press.browser.js -t [ babelify --presets [ es2015 ] ]",
+    "build": "babel hot-press.src.js --out-file hot-press.js --presets es2015",
     "cover": "cat ./coverage/lcov.info | coveralls && rm -rf ./coverage",
     "lint": "eslint hot-press.js test.js",
     "lint-w": "nodemon -x 'npm run lint'",
@@ -16,9 +16,8 @@
   "author": "John Wright <johngeorge.wright@gmail.com>",
   "license": "ISC",
   "devDependencies": {
+    "babel-cli": "^6.10.1",
     "babel-preset-es2015": "^6.9.0",
-    "babelify": "^7.3.0",
-    "browserify": "^13.0.1",
     "chai": "^3.5.0",
     "coveralls": "^2.11.9",
     "eslint": "^2.10.2",
