@@ -7,10 +7,6 @@
 
 ## Installation
 
-This is built in ECMAScript 6 with no precompiling. If you require this in
-earlier versions of ECMAScript, please use a compiler. This will work with
-Node v6 without any flags and Node v4 with the `--harmony` flag.
-
 ```
 npm i hot-press
 ```

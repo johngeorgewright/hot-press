@@ -5,9 +5,6 @@
 It's easiest to use Node v6. If you have nvm install, simply run `nvm use` from
 within the project directory to switch to the correct version.
 
-If you must use Node v4, please make sure to change the test scripts to include
-the `--harmony` flag.
-
 Run the tests with `npm test`. If you would like to run tests every time a file
 a file is changed, run `npm run spec-w`.
 
