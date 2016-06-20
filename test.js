@@ -301,6 +301,41 @@ suite('triggersOnceAfter()', () => {
   });
 });
 
+suite('ns()', () => {
+  let spy;
+  let ns;
+
+  setup(() => {
+    spy = sinon.spy();
+    ns = HP.ns('foo');
+  });
+
+  test('it returns an object with all required methods', () => {
+    ns.should.be.an('object');
+    ns.should.contain.all.keys([
+      'after', 'all', 'before', 'emit', 'off', 'on', 'once', 'onceAfter',
+      'onceBefore', 'triggers', 'triggersAfter', 'triggersBefore',
+      'triggersOnce', 'triggersOnceAfter', 'triggersOnceBefore'
+    ]);
+  });
+
+  test('it decorates the `on` method with your namespace', () => {
+    ns.on('bar', spy);
+    return HP
+      .emit('foo.bar')
+      .then(() => ns.emit('bar'))
+      .then(() => spy.should.have.been.calledTwice);
+  });
+
+  test('it decorates trigger methods', () => {
+    ns.on('bar', spy);
+    ns.triggers('boo', ['bar']);
+    return HP
+      .emit('foo.boo')
+      .then(() => spy.should.have.been.calledOnce);
+  });
+});
+
 function testBeforePause(method) {
   return done => {
     let spy = sinon.spy();
