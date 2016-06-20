@@ -148,6 +148,19 @@ function random(from=0, to=1000) {
 }
 ```
 
+### Namespacing
+
+You can create a version of hot-press prefixing all messages with a namepsace.
+
+```javascript
+import {ns} from 'hot-press';
+const {emit, on} = ns('foo');
+
+on('event', eventName => console.log(eventName));
+emit('event');
+// foo.event
+```
+
 ## API
 
 ### `after(String eventName, Function subscriber)`
