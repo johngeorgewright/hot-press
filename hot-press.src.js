@@ -20,6 +20,13 @@ const HIERARCHY_SEPARATOR = '.';
 let listeners = {};
 
 /**
+ * A objet containing all the methods that hot-press can possibly be namespaced.
+ *
+ * @var Object
+ */
+let HP = {};
+
+/**
  * Returns all the listeners for a given message. The returned value will be an
  * object whose keys are 'before', 'on' and 'after' of which each will contain
  * an array of functions/listeners.
@@ -73,9 +80,7 @@ function onPart(part, message, fn) {
  * @param String message
  * @param Function fn
  */
-function on(message, fn) {
-  onPart(ON, message, fn);
-}
+HP.on = (message, fn) => onPart(ON, message, fn);
 
 /**
  * Adds a listener to the beginning of the event lifecycle.
@@ -83,9 +88,7 @@ function on(message, fn) {
  * @param String message
  * @param Function fn
  */
-function before(message, fn) {
-  onPart(BEFORE, message, fn);
-}
+HP.before = (message, fn) => onPart(BEFORE, message, fn);
 
 /**
  * Adds a listener to the end of the event lifecycle.
@@ -93,9 +96,7 @@ function before(message, fn) {
  * @param String message
  * @param Function fn
  */
-function after(message, fn) {
-  onPart(AFTER, message, fn);
-}
+HP.after = (message, fn) => onPart(AFTER, message, fn);
 
 /**
  * Will call the listener once each of the specified events have been emitted.
@@ -115,7 +116,7 @@ function after(message, fn) {
  * @param Object<before: String[], on: String[], after: String[]> messages
  * @param Function fn
  */
-function all(messages, fn) {
+HP.all = (messages, fn) => {
   let toDo;
   let dataCollection;
   let size = Object
@@ -142,11 +143,11 @@ function all(messages, fn) {
   function init() {
     toDo = size;
     dataCollection = {};
-    registerSubscribers('before', onceBefore);
-    registerSubscribers('on', once);
-    registerSubscribers('after', onceAfter);
+    registerSubscribers('before', HP.onceBefore);
+    registerSubscribers('on', HP.once);
+    registerSubscribers('after', HP.onceAfter);
   }
-}
+};
 
 /**
  * Removes a listener from a given event.
@@ -191,9 +192,9 @@ function removeAllListeners(message) {
  * @param Function fn
  * @return Number
  */
-function off(message, fn) {
+HP.off = (message, fn) => {
   return fn ? removeListener(message, fn) : removeAllListeners(message);
-}
+};
 
 /**
  * Adds a listener to a specific part of the event lifecycle and removes it
@@ -205,7 +206,7 @@ function off(message, fn) {
  */
 function oncePart(subscribe, message, fn) {
   let subscriber = (...args) => {
-    off(message, subscriber);
+    HP.off(message, subscriber);
     return fn(...args);
   };
   subscribe(message, subscriber);
@@ -217,9 +218,7 @@ function oncePart(subscribe, message, fn) {
  * @param String message
  * @param Function fn
  */
-function once(message, fn) {
-  oncePart(on, message, fn);
-}
+HP.once = (message, fn) => oncePart(HP.on, message, fn);
 
 /**
  * Adds a listener to the beginning of the event lifecycle for just one emittion.
@@ -227,9 +226,7 @@ function once(message, fn) {
  * @param String message
  * @param Function fn
  */
-function onceBefore(message, fn) {
-  oncePart(before, message, fn);
-}
+HP.onceBefore = (message, fn) => oncePart(HP.before, message, fn);
 
 /**
  * Adds a listener to the end of the event lifecycle for just one emittion.
@@ -237,9 +234,7 @@ function onceBefore(message, fn) {
  * @param String message
  * @param Function fn
  */
-function onceAfter(message, fn) {
-  oncePart(after, message, fn);
-}
+HP.onceAfter = (message, fn) => oncePart(HP.after, message, fn);
 
 /**
  * Creates an emitter based on the event name/message and data. The emitter
@@ -264,12 +259,12 @@ function createEmitter(message, data) {
  * @param Any ...data
  * @return Promise
  */
-function emit(message, ...data) {
+HP.emit = (message, ...data) => {
   let emit = createEmitter(message, data);
   return emit(BEFORE)
     .then(() => emit(ON))
     .then(() => emit(AFTER));
-}
+};
 
 /**
  * Subscribes emittion of an array of events to another event. All data will be
@@ -281,7 +276,7 @@ function emit(message, ...data) {
  */
 function triggersPart(subscribe, message, triggers) {
   subscribe(message, (_, ...data) => Promise.all(
-    triggers.map(message => emit(message, ...data))
+    triggers.map(message => HP.emit(message, ...data))
   ));
 }
 
@@ -291,30 +286,58 @@ function triggersPart(subscribe, message, triggers) {
  * @param String trigger
  * @param String[] messages
  */
-function triggers(trigger, messages) {
-  triggersPart(on, trigger, messages);
-}
+HP.triggers = (trigger, messages) => triggersPart(HP.on, trigger, messages);
 
-function triggersAfter(trigger, messages) {
-  triggersPart(after, trigger, messages);
-}
+/**
+ * Registering that one event will trigger another, after the lifecycle.
+ *
+ * @param String trigger
+ * @param String[] messages
+ */
+HP.triggersAfter = (trigger, messages) => triggersPart(HP.after, trigger, messages);
 
-function triggersBefore(trigger, messages) {
-  triggersPart(before, trigger, messages);
-}
+/**
+ * Registering that one event will trigger another, before the lifecycle.
+ *
+ * @param String trigger
+ * @param String[] messages
+ */
+HP.triggersBefore = (trigger, messages) => triggersPart(HP.before, trigger, messages);
 
-function triggersOnce(trigger, messages) {
-  triggersPart(once, trigger, messages);
-}
+/**
+ * Registering that one event will trigger another, just once.
+ *
+ * @param String trigger
+ * @param String[] messages
+ */
+HP.triggersOnce = (trigger, messages) => triggersPart(HP.once, trigger, messages);
 
-function triggersOnceAfter(trigger, messages) {
-  triggersPart(onceAfter, trigger, messages);
-}
+/**
+ * Registering that one event will trigger another, just once, after the
+ * lifecycle.
+ *
+ * @param String trigger
+ * @param String[] messages
+ */
+HP.triggersOnceAfter = (trigger, messages) => triggersPart(HP.onceAfter, trigger, messages);
 
-function triggersOnceBefore(trigger, messages) {
-  triggersPart(onceBefore, trigger, messages);
-}
+/**
+ * Registering that one event will trigger another, just once, before the
+ * lifecycle.
+ *
+ * @param String trigger
+ * @param String[] messages
+ */
+HP.triggersOnceBefore = (trigger, messages) => triggersPart(HP.onceBefore, trigger, messages);
 
+/**
+ * Decorates an argument of a function call.
+ *
+ * @param Function method
+ * @param Number nthArg
+ * @param Function decorate
+ * @return Function
+ */
 function decorateArg(method, nthArg, decorate) {
   return (...args) => {
     args.splice(nthArg, 1, decorate(args[nthArg]));
@@ -322,28 +345,27 @@ function decorateArg(method, nthArg, decorate) {
   };
 }
 
+/**
+ * Returns a version of hot-press of which all event names are prefixed with a
+ * namespace.
+ *
+ * @param String ns
+ * @return Object
+ */
 function ns(ns) {
   let decorateMessage = message => `${ns}.${message}`;
   let decorateMessages = ms => ms.map(decorateMessage);
+  let methods = Object.keys(HP);
 
-  let object = [
-    'after', 'all', 'before', 'emit', 'off', 'on', 'once', 'onceAfter',
-    'onceBefore', 'triggers', 'triggersAfter', 'triggersBefore', 'triggersOnce',
-    'triggersOnceAfter', 'triggersOnceBefore'
-  ].reduce((object, method) => Object.assign(object, {
-    [method]: decorateArg(exports[method], 0, decorateMessage)
+  let object = methods.reduce((object, method) => Object.assign(object, {
+    [method]: decorateArg(HP[method], 0, decorateMessage)
   }), {});
 
-  return [
-    'triggers', 'triggersAfter', 'triggersBefore', 'triggersOnce',
-    'triggersOnceAfter', 'triggersOnceBefore'
-  ].reduce((object, method) => Object.assign(object, {
-    [method]: decorateArg(object[method], 1, decorateMessages)
-  }), object);
+  return methods
+    .filter(method => method.startsWith('triggers'))
+    .reduce((object, method) => Object.assign(object, {
+      [method]: decorateArg(object[method], 1, decorateMessages)
+    }), object);
 }
 
-Object.assign(exports, {
-  after, all, before, emit, ns, off, on, once, onceAfter, onceBefore, triggers,
-  triggersAfter, triggersBefore, triggersOnce, triggersOnceAfter,
-  triggersOnceBefore
-});
+Object.assign(exports, HP, {ns});

@@ -207,8 +207,8 @@ will be prefixed with a namespace.
 
 ### `off(String eventName, [Function subscriber])`
 
-Removes a given subscriber from an event. If none is specified, it will remove all
-subscribers from the event.
+Removes a given subscriber from an event. If none is specified, it will remove
+all subscribers from the event.
 
 ### `on(String eventName, Function subscriber)`
 
