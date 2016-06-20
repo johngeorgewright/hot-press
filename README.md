@@ -23,7 +23,8 @@ function.
 import {emit, on} from 'hot-press';
 
 on('event', (eventName, ...data) => console.log(...data));
-emit('event', 'some', 'variables'); // 'some' 'variables'
+emit('event', 'some', 'variables');
+// 'some' 'variables'
 ```
 
 ### Subscribing to multiple events
@@ -36,7 +37,8 @@ import {emit, all} from 'hot-press';
 
 all({on: ['event1', 'event2']}, () => console.log('Triggered!'));
 emit('event1');
-emit('event2'); // 'Triggered!'
+emit('event2');
+// 'Triggered!'
 ```
 
 ### Subscription hierarchy
@@ -48,7 +50,9 @@ import {emit, on} from 'hot-press';
 
 on('foo.bar', message => console.log(message));
 on('foo', message => console.log(message));
-emit('foo.bar'); // 'foo.bar' 'foo.bar'
+emit('foo.bar');
+// 'foo.bar'
+// 'foo.bar'
 ```
 
 ### Subscribing with wildcards
@@ -60,7 +64,9 @@ import {emit, on} from 'hot-press';
 
 on('*', () => console.log(2));
 on('e.*', () => console.log(1));
-emit('e.f'); // 1 2
+emit('e.f');
+// 1
+// 2
 ```
 
 ### Unsubscribe
@@ -76,13 +82,19 @@ on('event', fn);
 on('event', fn);
 on('event', fn);
 
-emit('event'); // blah blah blah
+emit('event');
+// blah
+// blah
+// blah
 
 off('event', fn);
-emit('event'); // blah blah
+emit('event');
+// blah
+// blah
 
 off('event');
-emit('event'); // <nothing>
+emit('event');
+// <nothing happens>
 ```
 
 ### Subscribing to the beginning and end of events
@@ -102,13 +114,19 @@ import {after, before, emit, off, on} from 'hot-press';
 before('event', () => console.log(1));
 on('event', () => console.log(2));
 after('event', () => console.log(3));
-emit('event'); // 1 2 3
+emit('event');
+// 1
+// 2
+// 3
 off('event');
 
 after('event', () => console.log(3));
 before('event', () => console.log(1));
 on('event', () => console.log(2));
-emit('event'); // 1 2 3
+emit('event');
+// 1
+// 2
+// 3
 ```
 
 ### Asynchronous subscriptions
@@ -131,7 +149,10 @@ before('event', eventuallyLog(1));
 on('event', eventuallyLog(2));
 after('event', eventuallyLog(3));
 emit('event').then(() => console.log(4));
-// 1 2 3 4
+// 1
+// 2
+// 3
+// 4
 
 function eventuallyLog(num) {
   return () => new Promise(resolve => {
