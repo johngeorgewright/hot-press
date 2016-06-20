@@ -143,9 +143,9 @@ HP.all = (messages, fn) => {
   function init() {
     toDo = size;
     dataCollection = {};
-    registerSubscribers('before', HP.onceBefore);
-    registerSubscribers('on', HP.once);
-    registerSubscribers('after', HP.onceAfter);
+    registerSubscribers(BEFORE, HP.onceBefore);
+    registerSubscribers(ON, HP.once);
+    registerSubscribers(AFTER, HP.onceAfter);
   }
 };
 
