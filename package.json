@@ -5,9 +5,10 @@
   "main": "hot-press.js",
   "scripts": {
     "build": "babel hot-press.src.js --out-file hot-press.js --presets es2015",
+    "build-w": "nodemon -i hot-press.js -x 'npm run build'",
     "cover": "cat ./coverage/lcov.info | coveralls && rm -rf ./coverage",
     "lint": "eslint hot-press.src.js test.js",
-    "lint-w": "nodemon -x 'npm run lint'",
+    "lint-w": "nodemon -x 'npm run lint' -w hot-press.src.js -w test.js",
     "prepublish": "npm test && npm run build",
     "spec": "istanbul cover _mocha --report lcovonly -- --ui tdd --check-leaks",
     "spec-w": "mocha --ui tdd --check-leaks --watch --growl --reporter dot",
