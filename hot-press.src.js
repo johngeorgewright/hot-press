@@ -315,8 +315,35 @@ function triggersOnceBefore(trigger, messages) {
   triggersPart(onceBefore, trigger, messages);
 }
 
+function decorateArg(method, nthArg, decorate) {
+  return (...args) => {
+    args.splice(nthArg, 1, decorate(args[nthArg]));
+    return method(...args);
+  };
+}
+
+function ns(ns) {
+  let decorateMessage = message => `${ns}.${message}`;
+  let decorateMessages = ms => ms.map(decorateMessage);
+
+  let object = [
+    'after', 'all', 'before', 'emit', 'off', 'on', 'once', 'onceAfter',
+    'onceBefore', 'triggers', 'triggersAfter', 'triggersBefore', 'triggersOnce',
+    'triggersOnceAfter', 'triggersOnceBefore'
+  ].reduce((object, method) => Object.assign(object, {
+    [method]: decorateArg(exports[method], 0, decorateMessage)
+  }), {});
+
+  return [
+    'triggers', 'triggersAfter', 'triggersBefore', 'triggersOnce',
+    'triggersOnceAfter', 'triggersOnceBefore'
+  ].reduce((object, method) => Object.assign(object, {
+    [method]: decorateArg(object[method], 1, decorateMessages)
+  }), object);
+}
+
 Object.assign(exports, {
-  after, all, before, emit, off, on, once, onceAfter, onceBefore, triggers,
+  after, all, before, emit, ns, off, on, once, onceAfter, onceBefore, triggers,
   triggersAfter, triggersBefore, triggersOnce, triggersOnceAfter,
   triggersOnceBefore
 });
