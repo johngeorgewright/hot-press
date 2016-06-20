@@ -20,7 +20,7 @@ const HIERARCHY_SEPARATOR = '.';
 let listeners = {};
 
 /**
- * A objet containing all the methods that hot-press can possibly be namespaced.
+ * An objet containing all the methods that hot-press can possibly namespace.
  *
  * @var Object
  */
@@ -80,7 +80,7 @@ function onPart(part, message, fn) {
  * @param String message
  * @param Function fn
  */
-HP.on = (message, fn) => onPart(ON, message, fn);
+HP.on = onPart.bind(null, ON);
 
 /**
  * Adds a listener to the beginning of the event lifecycle.
@@ -88,7 +88,7 @@ HP.on = (message, fn) => onPart(ON, message, fn);
  * @param String message
  * @param Function fn
  */
-HP.before = (message, fn) => onPart(BEFORE, message, fn);
+HP.before = onPart.bind(null, BEFORE);
 
 /**
  * Adds a listener to the end of the event lifecycle.
@@ -96,7 +96,7 @@ HP.before = (message, fn) => onPart(BEFORE, message, fn);
  * @param String message
  * @param Function fn
  */
-HP.after = (message, fn) => onPart(AFTER, message, fn);
+HP.after = onPart.bind(null, AFTER);
 
 /**
  * Will call the listener once each of the specified events have been emitted.
@@ -218,7 +218,7 @@ function oncePart(subscribe, message, fn) {
  * @param String message
  * @param Function fn
  */
-HP.once = (message, fn) => oncePart(HP.on, message, fn);
+HP.once = oncePart.bind(null, HP.on);
 
 /**
  * Adds a listener to the beginning of the event lifecycle for just one emittion.
@@ -226,7 +226,7 @@ HP.once = (message, fn) => oncePart(HP.on, message, fn);
  * @param String message
  * @param Function fn
  */
-HP.onceBefore = (message, fn) => oncePart(HP.before, message, fn);
+HP.onceBefore = oncePart.bind(null, HP.before);
 
 /**
  * Adds a listener to the end of the event lifecycle for just one emittion.
@@ -234,7 +234,7 @@ HP.onceBefore = (message, fn) => oncePart(HP.before, message, fn);
  * @param String message
  * @param Function fn
  */
-HP.onceAfter = (message, fn) => oncePart(HP.after, message, fn);
+HP.onceAfter = oncePart.bind(null, HP.after);
 
 /**
  * Creates an emitter based on the event name/message and data. The emitter
@@ -286,7 +286,7 @@ function triggersPart(subscribe, message, triggers) {
  * @param String trigger
  * @param String[] messages
  */
-HP.triggers = (trigger, messages) => triggersPart(HP.on, trigger, messages);
+HP.triggers = triggersPart.bind(null, HP.on);
 
 /**
  * Registering that one event will trigger another, after the lifecycle.
@@ -294,7 +294,7 @@ HP.triggers = (trigger, messages) => triggersPart(HP.on, trigger, messages);
  * @param String trigger
  * @param String[] messages
  */
-HP.triggersAfter = (trigger, messages) => triggersPart(HP.after, trigger, messages);
+HP.triggersAfter = triggersPart.bind(null, HP.after);
 
 /**
  * Registering that one event will trigger another, before the lifecycle.
@@ -302,7 +302,7 @@ HP.triggersAfter = (trigger, messages) => triggersPart(HP.after, trigger, messag
  * @param String trigger
  * @param String[] messages
  */
-HP.triggersBefore = (trigger, messages) => triggersPart(HP.before, trigger, messages);
+HP.triggersBefore = triggersPart.bind(null, HP.before);
 
 /**
  * Registering that one event will trigger another, just once.
@@ -310,7 +310,7 @@ HP.triggersBefore = (trigger, messages) => triggersPart(HP.before, trigger, mess
  * @param String trigger
  * @param String[] messages
  */
-HP.triggersOnce = (trigger, messages) => triggersPart(HP.once, trigger, messages);
+HP.triggersOnce = triggersPart.bind(null, HP.once);
 
 /**
  * Registering that one event will trigger another, just once, after the
@@ -319,7 +319,7 @@ HP.triggersOnce = (trigger, messages) => triggersPart(HP.once, trigger, messages
  * @param String trigger
  * @param String[] messages
  */
-HP.triggersOnceAfter = (trigger, messages) => triggersPart(HP.onceAfter, trigger, messages);
+HP.triggersOnceAfter = triggersPart.bind(null, HP.onceAfter);
 
 /**
  * Registering that one event will trigger another, just once, before the
@@ -328,7 +328,7 @@ HP.triggersOnceAfter = (trigger, messages) => triggersPart(HP.onceAfter, trigger
  * @param String trigger
  * @param String[] messages
  */
-HP.triggersOnceBefore = (trigger, messages) => triggersPart(HP.onceBefore, trigger, messages);
+HP.triggersOnceBefore = triggersPart.bind(null, HP.onceBefore);
 
 /**
  * Decorates an argument of a function call.
