@@ -200,6 +200,11 @@ Register a subscribing function to the beginning of the event.
 
 Publishes the event and passes all data arguments directly to the subscribers.
 
+### `ns(String namespace)`
+
+Creates an object containing the entire API of which all messages/event names
+will be prefixed with a namespace.
+
 ### `off(String eventName, [Function subscriber])`
 
 Removes a given subscriber from an event. If none is specified, it will remove all
