@@ -192,9 +192,9 @@ function removeAllListeners(message) {
  * @param Function fn
  * @return Number
  */
-HP.off = (message, fn) => {
-  return fn ? removeListener(message, fn) : removeAllListeners(message);
-};
+HP.off = (message, fn) => (
+  fn ? removeListener(message, fn) : removeAllListeners(message)
+);
 
 /**
  * Adds a listener to a specific part of the event lifecycle and removes it
