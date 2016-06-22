@@ -20,13 +20,6 @@ const HIERARCHY_SEPARATOR = '.';
 let listeners = {};
 
 /**
- * An objet containing all the methods that hot-press can possibly namespace.
- *
- * @var Object
- */
-let HP = {};
-
-/**
  * Returns all the listeners for a given message. The returned value will be an
  * object whose keys are 'before', 'on' and 'after' of which each will contain
  * an array of functions/listeners.
@@ -64,6 +57,17 @@ function getHierarchy(message) {
 }
 
 /**
+ * Prepends an event name, if the string exists.
+ *
+ * @param String name
+ * @param String prefix
+ * @return String
+ */
+function prependEventName(name, prefix) {
+  return prefix ? `${prefix}.${name}` : name;
+}
+
+/**
  * Adds a listener to a specific part of an event's lifecycle.
  *
  * @param String part
@@ -71,83 +75,8 @@ function getHierarchy(message) {
  * @param Function fn
  */
 function onPart(part, message, fn) {
-  getListenersFor(message)[part].push(fn);
+  getListenersFor(prependEventName(message, this.prefix))[part].push(fn);
 }
-
-/**
- * Adds a listener to the event.
- *
- * @param String message
- * @param Function fn
- */
-HP.on = onPart.bind(null, ON);
-
-/**
- * Adds a listener to the beginning of the event lifecycle.
- *
- * @param String message
- * @param Function fn
- */
-HP.before = onPart.bind(null, BEFORE);
-
-/**
- * Adds a listener to the end of the event lifecycle.
- *
- * @param String message
- * @param Function fn
- */
-HP.after = onPart.bind(null, AFTER);
-
-/**
- * Will call the listener once each of the specified events have been emitted.
- * The events are given as an object, where each key will specify the part of
- * the event lifecycle and the value is an array of event names/messages.
- *
- * ```
- * all({
- *   before: ['foo', 'bar'],
- *   on: ['another'],
- *   after: ['event']
- * }, ({foo, bar, another, event}) => {
- *   // You'll receive data for each event that fired
- * });
- * ```
- *
- * @param Object<before: String[], on: String[], after: String[]> messages
- * @param Function fn
- */
-HP.all = (messages, fn) => {
-  let toDo;
-  let dataCollection;
-  let size = Object
-    .keys(messages)
-    .reduce((size, part) => size + messages[part].length, 0);
-
-  init();
-
-  function subscriber(message, ...data) {
-    dataCollection[message] = data;
-    toDo--;
-    if (!toDo) {
-      fn(dataCollection);
-      init();
-    }
-  }
-
-  function registerSubscribers(prop, method) {
-    if (messages[prop]) messages[prop].forEach(message => {
-      method(message, subscriber);
-    });
-  }
-
-  function init() {
-    toDo = size;
-    dataCollection = {};
-    registerSubscribers(BEFORE, HP.onceBefore);
-    registerSubscribers(ON, HP.once);
-    registerSubscribers(AFTER, HP.onceAfter);
-  }
-};
 
 /**
  * Removes a listener from a given event.
@@ -185,18 +114,6 @@ function removeAllListeners(message) {
 }
 
 /**
- * Removes the specified listener from a given event. If no listener is
- * specified, all will be removed.
- *
- * @param String message
- * @param Function fn
- * @return Number
- */
-HP.off = (message, fn) => (
-  fn ? removeListener(message, fn) : removeAllListeners(message)
-);
-
-/**
  * Adds a listener to a specific part of the event lifecycle and removes it
  * as soon as it's been called.
  *
@@ -206,35 +123,11 @@ HP.off = (message, fn) => (
  */
 function oncePart(subscribe, message, fn) {
   let subscriber = (...args) => {
-    HP.off(message, subscriber);
+    this.off(message, subscriber);
     return fn(...args);
   };
   subscribe(message, subscriber);
 }
-
-/**
- * Adds the listener to the event for just one emittion.
- *
- * @param String message
- * @param Function fn
- */
-HP.once = oncePart.bind(null, HP.on);
-
-/**
- * Adds a listener to the beginning of the event lifecycle for just one emittion.
- *
- * @param String message
- * @param Function fn
- */
-HP.onceBefore = oncePart.bind(null, HP.before);
-
-/**
- * Adds a listener to the end of the event lifecycle for just one emittion.
- *
- * @param String message
- * @param Function fn
- */
-HP.onceAfter = oncePart.bind(null, HP.after);
 
 /**
  * Creates an emitter based on the event name/message and data. The emitter
@@ -253,20 +146,6 @@ function createEmitter(message, data) {
 }
 
 /**
- * Fires off the lifecycle of an event.
- *
- * @param String message
- * @param Any ...data
- * @return Promise
- */
-HP.emit = (message, ...data) => {
-  let emit = createEmitter(message, data);
-  return emit(BEFORE)
-    .then(() => emit(ON))
-    .then(() => emit(AFTER));
-};
-
-/**
  * Subscribes emittion of an array of events to another event. All data will be
  * passed to the emittions.
  *
@@ -276,96 +155,206 @@ HP.emit = (message, ...data) => {
  */
 function triggersPart(subscribe, message, triggers) {
   subscribe(message, (_, ...data) => Promise.all(
-    triggers.map(message => HP.emit(message, ...data))
+    triggers.map(message => this.emit(message, ...data))
   ));
 }
 
-/**
- * Registering that one event will trigger another, passing all data.
- *
- * @param String trigger
- * @param String[] messages
- */
-HP.triggers = triggersPart.bind(null, HP.on);
+class HotPress {
 
-/**
- * Registering that one event will trigger another, after the lifecycle.
- *
- * @param String trigger
- * @param String[] messages
- */
-HP.triggersAfter = triggersPart.bind(null, HP.after);
+  constructor(prefix='') {
+    /**
+     * The prefix to add to all messages
+     *
+     * @var String
+     */
+    this.prefix = prefix;
 
-/**
- * Registering that one event will trigger another, before the lifecycle.
- *
- * @param String trigger
- * @param String[] messages
- */
-HP.triggersBefore = triggersPart.bind(null, HP.before);
+    this.emit = this.emit.bind(this);
+    this.all = this.all.bind(this);
+    this.off = this.off.bind(this);
+    this.ns = this.ns.bind(this);
 
-/**
- * Registering that one event will trigger another, just once.
- *
- * @param String trigger
- * @param String[] messages
- */
-HP.triggersOnce = triggersPart.bind(null, HP.once);
+    /**
+     * Adds a listener to the beginning of the event lifecycle.
+     *
+     * @param String message
+     * @param Function fn
+     */
+    this.before = onPart.bind(this, BEFORE);
 
-/**
- * Registering that one event will trigger another, just once, after the
- * lifecycle.
- *
- * @param String trigger
- * @param String[] messages
- */
-HP.triggersOnceAfter = triggersPart.bind(null, HP.onceAfter);
+    /**
+     * Adds a listener to the event.
+     *
+     * @param String message
+     * @param Function fn
+     */
+    this.on = onPart.bind(this, ON);
 
-/**
- * Registering that one event will trigger another, just once, before the
- * lifecycle.
- *
- * @param String trigger
- * @param String[] messages
- */
-HP.triggersOnceBefore = triggersPart.bind(null, HP.onceBefore);
+    /**
+     * Adds a listener to the end of the event lifecycle.
+     *
+     * @param String message
+     * @param Function fn
+     */
+    this.after = onPart.bind(this, AFTER);
 
-/**
- * Decorates an argument of a function call.
- *
- * @param Function method
- * @param Number nthArg
- * @param Function decorate
- * @return Function
- */
-function decorateArg(method, nthArg, decorate) {
-  return (...args) => {
-    args.splice(nthArg, 1, decorate(args[nthArg]));
-    return method(...args);
-  };
+    /**
+     * Adds a listener to the beginning of the event lifecycle for just one
+     * emittion.
+     *
+     * @param String message
+     * @param Function fn
+     */
+    this.onceBefore = oncePart.bind(this, this.before);
+
+    /**
+     * Adds the listener to the event for just one emittion.
+     *
+     * @param String message
+     * @param Function fn
+     */
+    this.once = oncePart.bind(this, this.on);
+
+    /**
+     * Adds a listener to the end of the event lifecycle for just one emittion.
+     *
+     * @param String message
+     * @param Function fn
+     */
+    this.onceAfter = oncePart.bind(this, this.after);
+
+    /**
+     * Registering that one event will trigger another, passing all data.
+     *
+     * @param String trigger
+     * @param String[] messages
+     */
+    this.triggers = triggersPart.bind(this, this.on);
+
+    /**
+     * Registering that one event will trigger another, after the lifecycle.
+     *
+     * @param String trigger
+     * @param String[] messages
+     */
+    this.triggersAfter = triggersPart.bind(this, this.after);
+
+    /**
+     * Registering that one event will trigger another, before the lifecycle.
+     *
+     * @param String trigger
+     * @param String[] messages
+     */
+    this.triggersBefore = triggersPart.bind(this, this.before);
+
+    /**
+     * Registering that one event will trigger another, just once.
+     *
+     * @param String trigger
+     * @param String[] messages
+     */
+    this.triggersOnce = triggersPart.bind(this, this.once);
+
+    /**
+     * Registering that one event will trigger another, just once, after the
+     * lifecycle.
+     *
+     * @param String trigger
+     * @param String[] messages
+     */
+    this.triggersOnceAfter = triggersPart.bind(this, this.onceAfter);
+
+    /**
+     * Registering that one event will trigger another, just once, before the
+     * lifecycle.
+     *
+     * @param String trigger
+     * @param String[] messages
+     */
+    this.triggersOnceBefore = triggersPart.bind(this, this.onceBefore);
+  }
+
+  /**
+   * Will call the listener once each of the specified events have been emitted.
+   * The events are given as an object, where each key will specify the part of
+   * the event lifecycle and the value is an array of event names/messages.
+   *
+   * ```
+   * all({
+   *   before: ['foo', 'bar'],
+   *   on: ['another'],
+   *   after: ['event']
+   * }, ({foo, bar, another, event}) => {
+   *   // You'll receive data for each event that fired
+   * });
+   * ```
+   *
+   * @param Object<before: String[], on: String[], after: String[]> messages
+   * @param Function fn
+   */
+  all(messages, fn) {
+    let toDo;
+    let dataCollection;
+    let size = Object
+      .keys(messages)
+      .reduce((size, part) => size + messages[part].length, 0);
+
+    const subscriber = (message, ...data) => {
+      dataCollection[message] = data;
+      toDo--;
+      if (!toDo) {
+        fn(dataCollection);
+        init();
+      }
+    };
+
+    const registerSubscribers = (prop, method) => {
+      if (messages[prop]) messages[prop].forEach(message => {
+        method(message, subscriber);
+      });
+    };
+
+    const init = () => {
+      toDo = size;
+      dataCollection = {};
+      registerSubscribers(BEFORE, this.onceBefore);
+      registerSubscribers(ON, this.once);
+      registerSubscribers(AFTER, this.onceAfter);
+    };
+
+    init();
+  }
+
+  /**
+   * Removes the specified listener from a given event. If no listener is
+   * specified, all will be removed.
+   *
+   * @param String message
+   * @param Function fn
+   * @return Number
+   */
+  off(message, fn) {
+    message = prependEventName(message, this.prefix);
+    return fn ? removeListener(message, fn) : removeAllListeners(message);
+  }
+
+  /**
+   * Adds a listener to the end of the event lifecycle for just one emittion.
+   *
+   * @param String message
+   * @param Function fn
+   */
+  emit(message, ...data) {
+    let emit = createEmitter(prependEventName(message, this.prefix), data);
+    return emit(BEFORE)
+      .then(() => emit(ON))
+      .then(() => emit(AFTER));
+  }
+
+  ns(namespace) {
+    return new HotPress(prependEventName(namespace, this.prefix));
+  }
+
 }
 
-/**
- * Returns a version of hot-press of which all event names are prefixed with a
- * namespace.
- *
- * @param String ns
- * @return Object
- */
-function ns(ns) {
-  let decorateMessage = message => `${ns}.${message}`;
-  let decorateMessages = ms => ms.map(decorateMessage);
-  let methods = Object.keys(HP);
-
-  let object = methods.reduce((object, method) => Object.assign(object, {
-    [method]: decorateArg(HP[method], 0, decorateMessage)
-  }), {});
-
-  return methods
-    .filter(method => method.startsWith('triggers'))
-    .reduce((object, method) => Object.assign(object, {
-      [method]: decorateArg(object[method], 1, decorateMessages)
-    }), object);
-}
-
-Object.assign(exports, HP, {ns});
+module.exports = new HotPress();
