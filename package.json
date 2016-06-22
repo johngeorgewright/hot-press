@@ -5,7 +5,7 @@
   "main": "hot-press.js",
   "scripts": {
     "build": "babel hot-press.src.js --out-file hot-press.js --presets es2015",
-    "build-w": "nodemon -i hot-press.js -x 'npm run build'",
+    "build-w": "nodemon -i hot-press.js -x 'npm test && npm run build'",
     "cover": "cat ./coverage/lcov.info | coveralls && rm -rf ./coverage",
     "lint": "eslint hot-press.src.js test.js",
     "lint-w": "nodemon -x 'npm run lint' -w hot-press.src.js -w test.js",
