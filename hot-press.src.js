@@ -80,6 +80,21 @@ function onPart(part, message, fn) {
 }
 
 /**
+ * Returns an immutable version of either all listeners, or all listeners on a
+ * particular event name/message.
+ *
+ * @param String message  Optional
+ * @return []
+ */
+function getAllListeners(message) {
+  return message
+    ? Object
+      .keys(listeners[message] || {})
+      .reduce((acc, part) => acc.concat(listeners[message][part]), [])
+    : listeners.splice();
+}
+
+/**
  * Removes a listener from a given event.
  *
  * @param String message
@@ -93,6 +108,7 @@ function removeListener(message, fn) {
     let set = listeners[key];
     let index = set.indexOf(fn);
     if (index !== -1) {
+      set[index]._hpRemoved = true;
       set.splice(index, 1);
       removed++;
       break;
@@ -108,8 +124,9 @@ function removeListener(message, fn) {
  * @return Number
  */
 function removeAllListeners(message) {
-  let all = listeners[message];
+  let all = getAllListeners(message);
   let amount = all ? all.length : 0;
+  all.forEach(listener => listener._hpRemoved = true);
   delete listeners[message];
   return amount;
 }
@@ -131,6 +148,21 @@ function oncePart(subscribe, message, fn) {
 }
 
 /**
+ * Create a promise and reject it in a given amount of milliseconds.
+ *
+ * @param Number timeout
+ * @return Promise
+ */
+function errorAfterMS(timeout) {
+  return new Promise((_, reject) => {
+    if (typeof timeout === 'number') setTimeout(
+      () => reject(new HotPressTimeoutError(timeout)),
+      timeout
+    );
+  });
+}
+
+/**
  * Creates an emitter based on the event name/message and data. The emitter
  * can then be used to emit each part of the lifecycle.
  *
@@ -138,11 +170,16 @@ function oncePart(subscribe, message, fn) {
  * @param Any[] data
  * @return Function
  */
-function createEmitter(message, data) {
-  let call = fn => fn(message, ...data);
-  let hierarchy = getHierarchy(message);
+function createEmitter(message, data, timeout) {
+  const hierarchy = getHierarchy(message);
+  const call = fn => Promise
+    .resolve()
+    .then(() => !fn._hpRemoved && fn(message, ...data));
+  const promisify = fn => Promise
+    .race([errorAfterMS(timeout), call(fn)])
+    .catch(error => emit(prependEventName(message, ERROR), [error]));
   return part => Promise.all(flatten(
-    hierarchy.map(message => getListenersFor(message)[part].map(call))
+    hierarchy.map(message => getListenersFor(message)[part].map(promisify))
   ));
 }
 
@@ -165,22 +202,15 @@ function triggersPart(subscribe, message, triggers) {
  *
  * @param String message
  * @param Any[] data
- * @param Number timeout  Optional amount of milliseconds to try the lifecycle
+ * @param Number timeout  Optional amount of milliseconds to try each listener
+ * @return Promise
  */
 function emit(message, data, timeout) {
-  let emit = createEmitter(message, data);
-  return Promise.race([
-    new Promise((_, reject) => {
-      if (typeof timeout === 'number') setTimeout(
-        () => reject(new HotPressTimeoutError(timeout)),
-        timeout
-      );
-    }),
-    Promise.resolve()
-      .then(() => emit(BEFORE))
-      .then(() => emit(ON))
-      .then(() => emit(AFTER))
-  ]);
+  let emit = createEmitter(message, data, timeout);
+  return Promise.resolve()
+    .then(() => emit(BEFORE))
+    .then(() => emit(ON))
+    .then(() => emit(AFTER));
 }
 
 class HotPressTimeoutError extends Error {
@@ -380,12 +410,11 @@ class HotPress {
    *
    * @param String message
    * @param Function fn
+   * @return Promise
    */
   emit(message, ...data) {
     message = prependEventName(message, this.prefix);
-    return emit(message, data, this.timeout).catch(error => (
-      emit(prependEventName(message, ERROR), [error])
-    ));
+    return emit(message, data, this.timeout);
   }
 
   /**

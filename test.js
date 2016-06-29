@@ -363,11 +363,11 @@ function testBeforeTimeout(method) {
   return () => {
     let spyA = sinon.spy();
     let spyB = sinon.spy();
-    HP.on('e', spyA);
+    HP.after('e', spyA);
     HP.on('error.e', spyB);
     method('e', () => new Promise(resolve => setTimeout(resolve, HP.timeout + 5)));
     return HP.emit('e').then(() => {
-      spyA.should.not.have.been.called;
+      spyA.should.have.been.calledOnce;
       spyB.should.have.been.calledOnce;
       let error = spyB.firstCall.args[1];
       error.should.be.instanceOf(Error);
