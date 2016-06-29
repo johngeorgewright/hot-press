@@ -1,6 +1,7 @@
 'use strict';
 
 const flatten = require('lodash.flatten');
+const ERROR = 'error';
 const ON = 'on';
 const BEFORE = 'before';
 const AFTER = 'after';
@@ -159,6 +160,35 @@ function triggersPart(subscribe, message, triggers) {
   ));
 }
 
+/**
+ * Begin the event lifecycle for a given event and data.
+ *
+ * @param String message
+ * @param Any[] data
+ * @param Number timeout  Optional amount of milliseconds to try the lifecycle
+ */
+function emit(message, data, timeout) {
+  let emit = createEmitter(message, data);
+  return Promise.race([
+    new Promise((_, reject) => {
+      if (typeof timeout === 'number') setTimeout(
+        () => reject(new HotPressTimeoutError(timeout)),
+        timeout
+      );
+    }),
+    Promise.resolve()
+      .then(() => emit(BEFORE))
+      .then(() => emit(ON))
+      .then(() => emit(AFTER))
+  ]);
+}
+
+class HotPressTimeoutError extends Error {
+  constructor(ms) {
+    super(`Exceeded ${ms}ms`);
+  }
+}
+
 class HotPress {
 
   constructor(prefix='') {
@@ -168,6 +198,13 @@ class HotPress {
      * @var String
      */
     this.prefix = prefix;
+
+    /**
+     * Timeout to stop long processes within the event lifecycle.
+     *
+     * @var Number
+     */
+    this.timeout = 300;
 
     this.emit = this.emit.bind(this);
     this.all = this.all.bind(this);
@@ -345,12 +382,19 @@ class HotPress {
    * @param Function fn
    */
   emit(message, ...data) {
-    let emit = createEmitter(prependEventName(message, this.prefix), data);
-    return emit(BEFORE)
-      .then(() => emit(ON))
-      .then(() => emit(AFTER));
+    message = prependEventName(message, this.prefix);
+    return emit(message, data, this.timeout).catch(error => (
+      emit(prependEventName(message, ERROR), [error])
+    ));
   }
 
+  /**
+   * Creates another version of hot press where all events are prefixed with
+   * the given string.
+   *
+   * @param String namespace
+   * @return HotPress
+   */
   ns(namespace) {
     return new HotPress(prependEventName(namespace, this.prefix));
   }

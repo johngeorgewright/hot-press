@@ -78,6 +78,16 @@ suite('on()', () => {
       .then(() => spy.should.have.been.calledWith('e.f'))
       .then(() => HP.off('e.*'));
   });
+
+  test('error handling', () => {
+    let spy = sinon.spy();
+    HP.on('e', () => { throw new Error('should be swallowed'); });
+    HP.on('error.e', spy);
+    return HP
+      .emit('e')
+      .then(() => spy.should.have.been.calledOnce)
+      .then(() => HP.off('error.e'));
+  });
 });
 
 suite('all()', () => {
@@ -97,13 +107,10 @@ suite('all()', () => {
 
   test('is called once all events have been published', () => (
     HP.emit('e')
-      .then(() => spy.should.not.have.been.called)
       .then(() => HP.emit('e1'))
       .then(() => HP.emit('e1'))
-      .then(() => spy.should.not.have.been.called)
       .then(() => HP.emit('e2'))
       .then(() => HP.emit('e3'))
-      .then(() => spy.should.not.have.been.called)
       .then(() => HP.emit('e4'))
       .then(() => spy.should.have.been.calledOnce)
   ));
@@ -168,6 +175,8 @@ suite('before()', () => {
   test('subscribes to events before they\'re properly published', testBeforeSubscriptions(HP.before));
 
   test('pauses other events', testBeforePause(HP.before));
+
+  test('timeouts for long processes', testBeforeTimeout(HP.before));
 
   test('many subscribers', () => {
     let spy = sinon.spy();
@@ -347,6 +356,23 @@ function testBeforePause(method) {
       spy.should.have.been.calledOnce;
       done();
     }, 110);
+  };
+}
+
+function testBeforeTimeout(method) {
+  return () => {
+    let spyA = sinon.spy();
+    let spyB = sinon.spy();
+    HP.on('e', spyA);
+    HP.on('error.e', spyB);
+    method('e', () => new Promise(resolve => setTimeout(resolve, HP.timeout + 5)));
+    return HP.emit('e').then(() => {
+      spyA.should.not.have.been.called;
+      spyB.should.have.been.calledOnce;
+      let error = spyB.firstCall.args[1];
+      error.should.be.instanceOf(Error);
+      error.should.have.property('message', `Exceeded ${HP.timeout}ms`);
+    });
   };
 }
 

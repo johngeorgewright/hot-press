@@ -169,6 +169,21 @@ function random(from=0, to=1000) {
 }
 ```
 
+#### Timeouts
+
+There is a configurable timeout for these asynchronous events. By default it's
+300ms, but it can be configured like so:
+
+```javascript
+import HP, {ns} from 'hot-press';
+
+HP.timeout = 1000; // global
+ns('myNamespace').timeout = 600; // specific to a namespace
+```
+
+If the timeout is exceeded by a listener within any part of event lifecycle, the
+event is terminated and an error event is published.
+
 ### Namespacing
 
 You can create a version of hot-press prefixing all messages with a namepsace.
@@ -180,6 +195,20 @@ const {emit, on} = ns('foo');
 on('event', eventName => console.log(eventName));
 emit('event');
 // foo.event
+```
+
+### Error handling
+
+Errors thrown within listeners/subscribers are swallowed but can be captured in
+error events:
+
+```javascript
+import {emit, on} from 'hot-press';
+
+on('error.event', error => console.log(error.message));
+on('event', () => throw new Error('Something went wrong'));
+emit('event');
+// "Something went wrong"
 ```
 
 ## API
