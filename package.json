@@ -10,9 +10,9 @@
     "lint": "eslint hot-press.src.js test.js",
     "lint-w": "nodemon -x 'npm run lint' -w hot-press.src.js -w test.js",
     "prepublish": "npm test && npm run build",
-    "spec": "istanbul cover _mocha --report lcovonly -- --ui tdd --check-leaks",
+    "spec": "istanbul cover _mocha -- --ui tdd --check-leaks",
     "spec-w": "mocha --ui tdd --check-leaks --watch --growl --reporter dot",
-    "test": "npm run lint && npm run spec"
+    "test": "npm run lint && istanbul cover _mocha --report lcovonly -- --ui tdd --check-leaks"
   },
   "author": "John Wright <johngeorge.wright@gmail.com>",
   "license": "ISC",

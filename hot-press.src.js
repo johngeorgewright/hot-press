@@ -21,12 +21,21 @@ const HIERARCHY_SEPARATOR = '.';
 let listeners = {};
 
 /**
+ * Procedures referenced by the name.
+ *
+ * [name]: Function
+ *
+ * @var Object
+ */
+let procedures = {};
+
+/**
  * Returns all the listeners for a given message. The returned value will be an
  * object whose keys are 'before', 'on' and 'after' of which each will contain
  * an array of functions/listeners.
  *
  * @param String message
- * @return Object
+ * @return Object<before: [], on: [], after: []>
  */
 function getListenersFor(message) {
   if (!listeners[message]) listeners[message] = {
@@ -35,6 +44,19 @@ function getListenersFor(message) {
     [AFTER]: []
   };
   return listeners[message];
+}
+
+/**
+ * Returns an immutable version of all listeners on a particular event
+ * name/message.
+ *
+ * @param String message
+ * @return []
+ */
+function getAllListenersFor(message) {
+  return Object
+    .keys(listeners[message] || {})
+    .reduce((acc, part) => acc.concat(listeners[message][part]), []);
 }
 
 /**
@@ -80,21 +102,6 @@ function onPart(part, message, fn) {
 }
 
 /**
- * Returns an immutable version of either all listeners, or all listeners on a
- * particular event name/message.
- *
- * @param String message  Optional
- * @return []
- */
-function getAllListeners(message) {
-  return message
-    ? Object
-      .keys(listeners[message] || {})
-      .reduce((acc, part) => acc.concat(listeners[message][part]), [])
-    : listeners.splice();
-}
-
-/**
  * Removes a listener from a given event.
  *
  * @param String message
@@ -124,7 +131,7 @@ function removeListener(message, fn) {
  * @return Number
  */
 function removeAllListeners(message) {
-  let all = getAllListeners(message);
+  let all = getAllListenersFor(message);
   let amount = all ? all.length : 0;
   all.forEach(listener => listener._hpRemoved = true);
   delete listeners[message];
@@ -175,11 +182,11 @@ function createEmitter(message, data, timeout) {
   const call = fn => Promise
     .resolve()
     .then(() => !fn._hpRemoved && fn(message, ...data));
-  const promisify = fn => Promise
+  const promise = fn => Promise
     .race([errorAfterMS(timeout), call(fn)])
     .catch(error => emit(prependEventName(message, ERROR), [error]));
   return part => Promise.all(flatten(
-    hierarchy.map(message => getListenersFor(message)[part].map(promisify))
+    hierarchy.map(message => getListenersFor(message)[part].map(promise))
   ));
 }
 
@@ -211,12 +218,6 @@ function emit(message, data, timeout) {
     .then(() => emit(BEFORE))
     .then(() => emit(ON))
     .then(() => emit(AFTER));
-}
-
-class HotPressTimeoutError extends Error {
-  constructor(ms) {
-    super(`Exceeded ${ms}ms`);
-  }
 }
 
 class HotPress {
@@ -409,7 +410,7 @@ class HotPress {
    * Adds a listener to the end of the event lifecycle for just one emittion.
    *
    * @param String message
-   * @param Function fn
+   * @param ...Any data
    * @return Promise
    */
   emit(message, ...data) {
@@ -428,6 +429,65 @@ class HotPress {
     return new HotPress(prependEventName(namespace, this.prefix));
   }
 
+  /**
+   * Register a process to a name.
+   *
+   * @param String name
+   * @param Function proc
+   * @throws HotPressExistingProcedureError
+   */
+  reg(name, proc) {
+    name = prependEventName(name, this.prefix);
+    if (procedures[name]) throw new HotPressExistingProcedureError(name);
+    procedures[name] = proc;
+  }
+
+  /**
+   * Deregisters a process.
+   *
+   * @param String name
+   * @return Number
+   */
+  dereg(name) {
+    name = prependEventName(name, this.prefix);
+    if (procedures[name]) {
+      procedures[name]._hpRemoved = true;
+      delete procedures[name];
+      return 1;
+    }
+    return 0;
+  }
+
+  /**
+   * Calls a procedure and begins an event lifecycle too.
+   *
+   * @param String name
+   * @param ...Any
+   * @return Promise
+   */
+  call(name, ...data) {
+    name = prependEventName(name, this.prefix);
+    let emit = createEmitter(name, data, this.timeout);
+    let proc = procedures[name] || (() => {});
+    return Promise
+      .resolve()
+      .then(() => emit(BEFORE))
+      .then(() => Promise.all([proc(...data), emit(ON)]))
+      .then(() => emit(AFTER));
+  }
+
+}
+
+class HotPressTimeoutError extends Error {
+  constructor(ms) {
+    super(`Exceeded ${ms}ms`);
+  }
+}
+
+class HotPressExistingProcedureError extends Error {
+  constructor(name) {
+    super(`The procedure "${name}" is already registered`);
+  }
 }
 
 module.exports = new HotPress();

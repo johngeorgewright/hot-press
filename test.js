@@ -160,6 +160,11 @@ suite('off()', () => {
       spyB.should.not.have.been.called;
     });
   });
+
+  test('returns the amount listeners removed', () => {
+    HP.off('e').should.equal(2);
+    HP.off('e').should.equal(0);
+  });
 });
 
 suite('once()', () => {
@@ -342,6 +347,77 @@ suite('ns()', () => {
     return HP
       .emit('foo.boo')
       .then(() => spy.should.have.been.calledOnce);
+  });
+});
+
+suite('reg()', () => {
+  setup(() => {
+    HP.reg('proc', () => {});
+  });
+
+  teardown(() => {
+    HP.dereg('proc');
+  });
+
+  test('it will only allow one procedure per name', () => {
+    let incorrect = () => HP.reg('proc', () => {});
+    incorrect.should.throw('The procedure "proc" is already registered');
+  });
+});
+
+suite('dereg()', () => {
+  let spy;
+
+  setup(() => {
+    spy = sinon.spy();
+    HP.reg('procedure', spy);
+  });
+
+  test('the process is unregistered', () => {
+    return HP
+      .call('procedure')
+      .then(() => spy.should.have.been.calledOnce)
+      .then(() => HP.dereg('procedure'))
+      .then(() => HP.call('procedure'))
+      .then(() => spy.should.have.been.calledOnce);
+  });
+
+  test('the return value represents the amount of processes removed', () => {
+    HP.dereg('procedure').should.equal(1);
+    HP.dereg('foo').should.equal(0);
+  });
+});
+
+suite('call()', () => {
+  let spy;
+
+  setup(() => {
+    spy = sinon.spy();
+    HP.reg('proc', spy);
+  });
+
+  teardown(() => {
+    HP.dereg('proc');
+  });
+
+  test('returns a Promise', () => {
+    HP.call('proc').should.be.instanceOf(Promise);
+  });
+
+  test('the process is called', () => {
+    let data = ['i', 'am', 'data'];
+    return HP.call('proc', data).then(() => {
+      spy.should.have.been.calledWithExactly(data);
+    });
+  });
+
+  test('an event lifecycle is triggered', () => {
+    HP.before('proc', spy);
+    HP.on('proc', spy);
+    HP.after('proc', spy);
+    return HP
+      .call('proc')
+      .then(() => spy.callCount.should.equal(4));
   });
 });
 
