@@ -226,6 +226,14 @@ reasons you may want to use procedures:
 - If you've decided to use HotPress as a basis to your framework/application
   it can mean your API is more consistent.
 
+To register a procedure, use the `reg()` function. To cal your registered
+procedure, use the `call()` method.
+
+If the procedure returns a promise, it will wait for the promise to resolve
+before passing the resolved data back to the caller.
+
+The `call()` function always returns a promise.
+
 ```javascript
 import User from '../lib/user';
 import {reg, call, on} from 'hot-press';
@@ -255,16 +263,20 @@ Register a subscriber for when all events have been published
 
 Register a subscribing function to the beginning of the event.
 
-### `emit(String eventName, [Any ...data])`
+### `dereg(String procedureName) ==> Number`
+
+Deregisters a procedure.
+
+### `emit(String eventName, [Any ...data]) ==> Promise`
 
 Publishes the event and passes all data arguments directly to the subscribers.
 
-### `ns(String namespace)`
+### `ns(String namespace) ==> HotPress`
 
 Creates an object containing the entire API of which all messages/event names
 will be prefixed with a namespace.
 
-### `off(String eventName, [Function subscriber])`
+### `off(String eventName, [Function subscriber]) ==> Number`
 
 Removes a given subscriber from an event. If none is specified, it will remove
 all subscribers from the event.
@@ -295,6 +307,6 @@ When the event has been published, publish an array of of other events.
 
 Registers a procedure.
 
-### `call(String procedureName, [...Any])`
+### `call(String procedureName, [...Any]) ==> Promise`
 
 Call a procedure with the given arguments.
