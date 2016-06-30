@@ -98,6 +98,7 @@ function prependEventName(name, prefix) {
  * @param Function fn
  */
 function onPart(part, message, fn) {
+  fn._hpRemoved = false;
   getListenersFor(prependEventName(message, this.prefix))[part].push(fn);
 }
 
@@ -437,6 +438,7 @@ class HotPress {
    */
   reg(name, proc) {
     name = prependEventName(name, this.prefix);
+    proc._hpRemove = false;
     if (procedures[name]) throw new HotPressExistingProcedureError(name);
     procedures[name] = proc;
   }
@@ -469,7 +471,7 @@ class HotPress {
     let emit = createEmitter(name, data, this.timeout);
     let proc = procedures[name] || (() => {});
     return emit(BEFORE)
-      .then(() => Promise.all([proc(...data), emit(ON)]))
+      .then(() => Promise.all([!proc._hpRemoved && proc(...data), emit(ON)]))
       .then(() => emit(AFTER));
   }
 

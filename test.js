@@ -165,6 +165,14 @@ suite('off()', () => {
     HP.off('e').should.equal(2);
     HP.off('e').should.equal(0);
   });
+
+  test('we can add the same listener back again', () => {
+    HP.off('e');
+    HP.on('e', spyA);
+    return HP.emit('e').then(() => {
+      spyA.should.have.been.calledOnce;
+    });
+  });
 });
 
 suite('once()', () => {
