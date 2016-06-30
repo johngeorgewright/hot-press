@@ -1,7 +1,7 @@
 {
   "name": "hot-press",
   "version": "1.3.1",
-  "description": "PubSub library with extra asynchronous handling",
+  "description": "Event lifecycle management",
   "main": "hot-press.js",
   "scripts": {
     "build": "babel hot-press.src.js --out-file hot-press.js --presets es2015",
@@ -14,8 +14,13 @@
     "spec-w": "mocha --ui tdd --check-leaks --watch --growl --reporter dot",
     "test": "npm run lint && istanbul cover _mocha --report lcovonly -- --ui tdd --check-leaks"
   },
+  "keywords": [
+    "event",
+    "pubsub",
+    "broker"
+  ],
   "author": "John Wright <johngeorge.wright@gmail.com>",
-  "license": "ISC",
+  "license": "MIT",
   "devDependencies": {
     "babel-cli": "^6.10.1",
     "babel-preset-es2015": "^6.9.0",
