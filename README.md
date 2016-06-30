@@ -212,6 +212,35 @@ emit('event');
 // "Something went wrong"
 ```
 
+### Procedures
+
+Procedures are essentially functions, referenced by a string. There are a few
+reasons you may want to use procedures:
+
+- Whether the procedure exists or not, you can call it without anything
+  failing. This is useful when using procedures in a plugable interface, when
+  you're unsure whether the procedure is going to be there or not.
+- Hooking in to the function call. Every call to a procedure emits an event
+  with the same name as the procedure. The event lifecycle will exist, which
+  also means you can pause the call with the `before()` method.
+- If you've decided to use HotPress as a basis to your framework/application
+  it can mean your API is more consistent.
+
+```javascript
+import User from '../lib/user';
+import {reg, call, on} from 'hot-press';
+
+reg('users.get', query => User.all(query));
+
+on('error.users.get', error => console.error(error));
+
+on('users.get', query => console.log('Querying users table', query));
+
+call('users.get', {type: 'admin'}).then(users => {
+  // Do something with users
+});
+```
+
 ## API
 
 ### `after(String eventName, Function subscriber)`
@@ -261,3 +290,11 @@ event before it is removed.
 ### `triggers(String eventName, Array eventNames)`
 
 When the event has been published, publish an array of of other events.
+
+### `reg(String procedureName, Function procedure)`
+
+Registers a procedure.
+
+### `call(String procedureName, [...Any])`
+
+Call a procedure with the given arguments.
