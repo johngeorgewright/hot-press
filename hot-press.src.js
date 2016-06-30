@@ -487,4 +487,6 @@ class HotPressExistingProcedureError extends Error {
   }
 }
 
-module.exports = new HotPress();
+module.exports = Object.assign(
+  new HotPress(), {HotPressTimeoutError, HotPressExistingProcedureError}
+);
