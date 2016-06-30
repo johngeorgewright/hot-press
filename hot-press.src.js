@@ -214,8 +214,7 @@ function triggersPart(subscribe, message, triggers) {
  */
 function emit(message, data, timeout) {
   let emit = createEmitter(message, data, timeout);
-  return Promise.resolve()
-    .then(() => emit(BEFORE))
+  return emit(BEFORE)
     .then(() => emit(ON))
     .then(() => emit(AFTER));
 }
@@ -469,9 +468,7 @@ class HotPress {
     name = prependEventName(name, this.prefix);
     let emit = createEmitter(name, data, this.timeout);
     let proc = procedures[name] || (() => {});
-    return Promise
-      .resolve()
-      .then(() => emit(BEFORE))
+    return emit(BEFORE)
       .then(() => Promise.all([proc(...data), emit(ON)]))
       .then(() => emit(AFTER));
   }
