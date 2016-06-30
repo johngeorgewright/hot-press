@@ -237,11 +237,6 @@ class HotPress {
      */
     this.timeout = 300;
 
-    this.emit = this.emit.bind(this);
-    this.all = this.all.bind(this);
-    this.off = this.off.bind(this);
-    this.ns = this.ns.bind(this);
-
     /**
      * Adds a listener to the beginning of the event lifecycle.
      *

@@ -332,13 +332,14 @@ suite('ns()', () => {
     ns = HP.ns('foo');
   });
 
-  test('it returns an object with all required methods', () => {
+  test.only('it returns an object with all required methods', () => {
     ns.should.be.an('object');
-    ns.should.contain.all.keys([
-      'after', 'all', 'before', 'emit', 'off', 'on', 'once', 'onceAfter',
-      'onceBefore', 'triggers', 'triggersAfter', 'triggersBefore',
-      'triggersOnce', 'triggersOnceAfter', 'triggersOnceBefore'
-    ]);
+    [
+      'after', 'all', 'before', 'call', 'dereg', 'emit', 'ns', 'off', 'on',
+      'once', 'onceAfter', 'onceBefore', 'triggers', 'triggersAfter',
+      'triggersBefore', 'triggersOnce', 'triggersOnceAfter',
+      'triggersOnceBefore', 'reg'
+    ].forEach(name => ns.should.respondTo(name));
   });
 
   test('it decorates the `on` method with your namespace', () => {
