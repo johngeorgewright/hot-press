@@ -182,7 +182,8 @@ ns('myNamespace').timeout = 600; // specific to a namespace
 ```
 
 If the timeout is exceeded by a listener within any part of event lifecycle, the
-event is terminated and an error event is published.
+listener is terminated and an error event is published; it will not kill the
+event.
 
 ### Namespacing
 
