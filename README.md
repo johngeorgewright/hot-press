@@ -1,9 +1,11 @@
 # hot-press
 
-[![Coverage Status](https://coveralls.io/repos/github/johngeorgewright/hot-press/badge.svg?branch=master)](https://coveralls.io/github/johngeorgewright/hot-press?branch=master)
-[![Build Status](https://travis-ci.org/johngeorgewright/hot-press.svg?branch=master)](https://travis-ci.org/johngeorgewright/hot-press)
+[![Coverage Status](https://img.shields.io/coveralls/johngeorgewright/hot-press/master.svg?style=flat-square)](https://coveralls.io/github/johngeorgewright/hot-press?branch=master)
+[![Build Status](https://img.shields.io/travis/johngeorgewright/hot-press/master.svg?style=flat-square)](https://travis-ci.org/johngeorgewright/hot-press)
+[![NPM Version](https://img.shields.io/npm/v/hot-press.svg?style=flat-square)](https://www.npmjs.com/package/hot-press)
+[![License](https://img.shields.io/npm/l/hot-press.svg?style=flat-square)](https://github.com/johngeorgewright/hot-press/blob/master/LICENSE)
 
-> PubSub library with extra asynchronous handling
+> Event Lifecycle Management
 
 ## Installation
 
