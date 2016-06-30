@@ -332,7 +332,7 @@ suite('ns()', () => {
     ns = HP.ns('foo');
   });
 
-  test.only('it returns an object with all required methods', () => {
+  test('it returns an object with all required methods', () => {
     ns.should.be.an('object');
     [
       'after', 'all', 'before', 'call', 'dereg', 'emit', 'ns', 'off', 'on',
