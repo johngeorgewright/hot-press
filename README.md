@@ -3,6 +3,7 @@
 [![Coverage Status](https://img.shields.io/coveralls/johngeorgewright/hot-press/master.svg?style=flat-square)](https://coveralls.io/github/johngeorgewright/hot-press?branch=master)
 [![Build Status](https://img.shields.io/travis/johngeorgewright/hot-press/master.svg?style=flat-square)](https://travis-ci.org/johngeorgewright/hot-press)
 [![NPM Version](https://img.shields.io/npm/v/hot-press.svg?style=flat-square)](https://www.npmjs.com/package/hot-press)
+[![Dependencies](https://img.shields.io/gemnasium/johngeorgewright/hot-press.svg?style=flat-square)](https://gemnasium.com/github.com/johngeorgewright/hot-press)
 [![License](https://img.shields.io/npm/l/hot-press.svg?style=flat-square)](https://github.com/johngeorgewright/hot-press/blob/master/LICENSE)
 
 > Event Lifecycle Management
