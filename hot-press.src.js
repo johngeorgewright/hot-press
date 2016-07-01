@@ -1,11 +1,13 @@
 'use strict';
 
 const flatten = require('lodash.flatten');
+const upperFirst = require('lodash.upperfirst');
+const assert = require('assert');
 const ERROR = 'error';
 const ON = 'on';
-const BEFORE = 'before';
-const AFTER = 'after';
 const HIERARCHY_SEPARATOR = '.';
+const DEFAULT_LIFECYCLE = ['before', ON, 'after'];
+const DEFAULT_TIMEOUT = 300;
 
 /**
  * Listeners by event.
@@ -38,11 +40,11 @@ let procedures = {};
  * @return Object<before: [], on: [], after: []>
  */
 function getListenersFor(message) {
-  if (!listeners[message]) listeners[message] = {
-    [BEFORE]: [],
-    [ON]: [],
-    [AFTER]: []
-  };
+  if (!listeners[message]) {
+    listeners[message] = this.lifecycle.reduce((acc, method) => (
+      Object.assign(acc, {[method]: []})
+    ), {});
+  }
   return listeners[message];
 }
 
@@ -99,44 +101,7 @@ function prependEventName(name, prefix) {
  */
 function onPart(part, message, fn) {
   fn._hpRemoved = false;
-  getListenersFor(prependEventName(message, this.prefix))[part].push(fn);
-}
-
-/**
- * Removes a listener from a given event.
- *
- * @param String message
- * @param Function fn
- * @return Number
- */
-function removeListener(message, fn) {
-  let listeners = getListenersFor(message);
-  let removed = 0;
-  for (let key in listeners) {
-    let set = listeners[key];
-    let index = set.indexOf(fn);
-    if (index !== -1) {
-      set[index]._hpRemoved = true;
-      set.splice(index, 1);
-      removed++;
-      break;
-    }
-  }
-  return removed;
-}
-
-/**
- * Removes all listeners from a given event.
- *
- * @param String message
- * @return Number
- */
-function removeAllListeners(message) {
-  let all = getAllListenersFor(message);
-  let amount = all ? all.length : 0;
-  all.forEach(listener => listener._hpRemoved = true);
-  delete listeners[message];
-  return amount;
+  getListenersFor.call(this, prependEventName(message, this.prefix))[part].push(fn);
 }
 
 /**
@@ -171,27 +136,6 @@ function errorAfterMS(timeout) {
 }
 
 /**
- * Creates an emitter based on the event name/message and data. The emitter
- * can then be used to emit each part of the lifecycle.
- *
- * @param String message
- * @param Any[] data
- * @return Function
- */
-function createEmitter(message, data, timeout) {
-  const hierarchy = getHierarchy(message);
-  const call = fn => Promise
-    .resolve()
-    .then(() => !fn._hpRemoved && fn(message, ...data));
-  const promise = fn => Promise
-    .race([errorAfterMS(timeout), call(fn)])
-    .catch(error => emit(prependEventName(message, ERROR), [error]));
-  return part => Promise.all(flatten(
-    hierarchy.map(message => getListenersFor(message)[part].map(promise))
-  ));
-}
-
-/**
  * Subscribes emittion of an array of events to another event. All data will be
  * passed to the emittions.
  *
@@ -206,6 +150,30 @@ function triggersPart(subscribe, message, triggers) {
 }
 
 /**
+ * Creates an emitter based on the event name/message and data. The emitter
+ * can then be used to emit each part of the lifecycle.
+ *
+ * @param String message
+ * @param Any[] data
+ * @return Function
+ */
+function createEmitter(message, data) {
+  const hierarchy = getHierarchy(message);
+
+  const call = fn => Promise
+    .resolve()
+    .then(() => !fn._hpRemoved && fn(message, ...data));
+
+  const promise = fn => Promise
+    .race([errorAfterMS(this.timeout), call(fn)])
+    .catch(error => emit.call(this, prependEventName(message, ERROR), [error]));
+
+  return part => Promise.all(flatten(
+    hierarchy.map(message => getListenersFor.call(this, message)[part].map(promise))
+  ));
+}
+
+/**
  * Begin the event lifecycle for a given event and data.
  *
  * @param String message
@@ -213,128 +181,156 @@ function triggersPart(subscribe, message, triggers) {
  * @param Number timeout  Optional amount of milliseconds to try each listener
  * @return Promise
  */
-function emit(message, data, timeout) {
-  let emit = createEmitter(message, data, timeout);
-  return emit(BEFORE)
-    .then(() => emit(ON))
-    .then(() => emit(AFTER));
+function emit(message, data) {
+  let emit = createEmitter.call(this, message, data);
+  return this.lifecycle.reduce((promise, method) => (
+    promise.then(() => emit(method))
+  ), Promise.resolve());
 }
 
+/**
+ * Finds and returns duplicates in an array.
+ *
+ * @param Any[]
+ * @return Any[]
+ */
+function findDuplicates(arr) {
+  let uniques = arr
+    .map(it => ({count: 1, item: it}))
+    .reduce(
+      (acc, it) => Object.assign(acc, {[it.item]: (acc[it.item] || 0) + it.count}),
+      {}
+    );
+  return Object
+    .keys(uniques)
+    .filter(it => uniques[it] > 1);
+}
+
+/**
+ * Removes a listener from a given event.
+ *
+ * @param String message
+ * @param Function fn
+ * @return Number
+ */
+function removeListener(message, fn) {
+  let listeners = getListenersFor.call(this, message);
+  let removed = 0;
+  for (let key in listeners) {
+    let set = listeners[key];
+    let index = set.indexOf(fn);
+    if (index !== -1) {
+      set[index]._hpRemoved = true;
+      set.splice(index, 1);
+      removed++;
+      break;
+    }
+  }
+  return removed;
+}
+
+/**
+ * Removes all listeners from a given event.
+ *
+ * @param String message
+ * @return Number
+ */
+function removeAllListeners(message) {
+  let all = getAllListenersFor(message);
+  let amount = all ? all.length : 0;
+  all.forEach(listener => listener._hpRemoved = true);
+  delete listeners[message];
+  return amount;
+}
+
+/**
+ * Returns a method name we may use to attach a single listener.
+ *
+ * @param String method
+ * @return String
+ */
+function singularMethodName(method) {
+  return method === ON ? 'once' : `once${upperFirst(method)}`;
+}
+
+/**
+ * Returns a method name we may use as the trigger listener.
+ *
+ * @param String method
+ * @param String
+ */
+function triggerMethodName(method) {
+  return method === ON ? 'triggers' : `triggers${upperFirst(method)}`;
+}
+
+/**
+ * The exposable methods for each HotPress namespace.
+ *
+ * @class HotPress
+ * @param String prefix
+ * @param String[] lifecycle
+ * @param Number timeout
+ */
 class HotPress {
 
-  constructor(prefix='') {
+  constructor(
+    prefix = '',
+    lifecycle = DEFAULT_LIFECYCLE,
+    timeout = DEFAULT_TIMEOUT
+  ) {
     /**
      * The prefix to add to all messages
      *
-     * @var String
+     * @prop String prefix
      */
     this.prefix = prefix;
 
     /**
+     * The lifecycle list
+     * @prop String[] lifecycle
+     */
+    this._lifecycle = [];
+    this.lifecycle = lifecycle;
+
+    /**
      * Timeout to stop long processes within the event lifecycle.
      *
-     * @var Number
+     * @prop Number timeout
      */
-    this.timeout = 300;
+    this.timeout = timeout;
+  }
 
-    /**
-     * Adds a listener to the beginning of the event lifecycle.
-     *
-     * @param String message
-     * @param Function fn
-     */
-    this.before = onPart.bind(this, BEFORE);
+  get lifecycle() {
+    return this._lifecycle;
+  }
 
-    /**
-     * Adds a listener to the event.
-     *
-     * @param String message
-     * @param Function fn
-     */
-    this.on = onPart.bind(this, ON);
+  set lifecycle(lifecycle) {
+    let {_lifecycle} = this;
+    let duplicates = findDuplicates(lifecycle);
+    this._lifecycle = lifecycle;
 
-    /**
-     * Adds a listener to the end of the event lifecycle.
-     *
-     * @param String message
-     * @param Function fn
-     */
-    this.after = onPart.bind(this, AFTER);
+    assert(
+      !duplicates.length,
+      `Lifecycle contains duplicates (${duplicates})`
+    );
 
-    /**
-     * Adds a listener to the beginning of the event lifecycle for just one
-     * emittion.
-     *
-     * @param String message
-     * @param Function fn
-     */
-    this.onceBefore = oncePart.bind(this, this.before);
+    assert(
+      ~lifecycle.indexOf(ON),
+      `Lifecycle must contain an "on" method (${lifecycle})`
+    );
 
-    /**
-     * Adds the listener to the event for just one emittion.
-     *
-     * @param String message
-     * @param Function fn
-     */
-    this.once = oncePart.bind(this, this.on);
+    _lifecycle.forEach(method => { delete this[method]; });
 
-    /**
-     * Adds a listener to the end of the event lifecycle for just one emittion.
-     *
-     * @param String message
-     * @param Function fn
-     */
-    this.onceAfter = oncePart.bind(this, this.after);
+    lifecycle.forEach(method => {
+      let singularName = singularMethodName(method);
+      let triggersName = triggerMethodName(method);
+      let singularTriggersName = triggerMethodName(singularName);
 
-    /**
-     * Registering that one event will trigger another, passing all data.
-     *
-     * @param String trigger
-     * @param String[] messages
-     */
-    this.triggers = triggersPart.bind(this, this.on);
-
-    /**
-     * Registering that one event will trigger another, after the lifecycle.
-     *
-     * @param String trigger
-     * @param String[] messages
-     */
-    this.triggersAfter = triggersPart.bind(this, this.after);
-
-    /**
-     * Registering that one event will trigger another, before the lifecycle.
-     *
-     * @param String trigger
-     * @param String[] messages
-     */
-    this.triggersBefore = triggersPart.bind(this, this.before);
-
-    /**
-     * Registering that one event will trigger another, just once.
-     *
-     * @param String trigger
-     * @param String[] messages
-     */
-    this.triggersOnce = triggersPart.bind(this, this.once);
-
-    /**
-     * Registering that one event will trigger another, just once, after the
-     * lifecycle.
-     *
-     * @param String trigger
-     * @param String[] messages
-     */
-    this.triggersOnceAfter = triggersPart.bind(this, this.onceAfter);
-
-    /**
-     * Registering that one event will trigger another, just once, before the
-     * lifecycle.
-     *
-     * @param String trigger
-     * @param String[] messages
-     */
-    this.triggersOnceBefore = triggersPart.bind(this, this.onceBefore);
+      this[method] = onPart.bind(this, method);
+      this[singularName] = oncePart.bind(this, this[method]);
+      this[triggersName] = triggersPart.bind(this, this[method]);
+      this[singularTriggersName] = triggersPart.bind(this, this[singularName]);
+    });
   }
 
   /**
@@ -380,9 +376,9 @@ class HotPress {
     const init = () => {
       toDo = size;
       dataCollection = {};
-      registerSubscribers(BEFORE, this.onceBefore);
-      registerSubscribers(ON, this.once);
-      registerSubscribers(AFTER, this.onceAfter);
+      this.lifecycle.forEach(method => {
+        registerSubscribers(method, this[singularMethodName(method)]);
+      });
     };
 
     init();
@@ -398,7 +394,9 @@ class HotPress {
    */
   off(message, fn) {
     message = prependEventName(message, this.prefix);
-    return fn ? removeListener(message, fn) : removeAllListeners(message);
+    return fn
+      ? removeListener.call(this, message, fn)
+      : removeAllListeners.call(this, message);
   }
 
   /**
@@ -410,7 +408,7 @@ class HotPress {
    */
   emit(message, ...data) {
     message = prependEventName(message, this.prefix);
-    return emit(message, data, this.timeout);
+    return emit.call(this, message, data);
   }
 
   /**
@@ -421,7 +419,11 @@ class HotPress {
    * @return HotPress
    */
   ns(namespace) {
-    return new HotPress(prependEventName(namespace, this.prefix));
+    return new HotPress(
+      prependEventName(namespace, this.prefix),
+      this.lifecycle,
+      this.timeout
+    );
   }
 
   /**
@@ -463,11 +465,16 @@ class HotPress {
    */
   call(name, ...data) {
     name = prependEventName(name, this.prefix);
-    let emit = createEmitter(name, data, this.timeout);
+    let emit = createEmitter.call(this, name, data);
     let proc = procedures[name] || (() => {});
-    return emit(BEFORE)
-      .then(() => Promise.all([!proc._hpRemoved && proc(...data), emit(ON)]))
-      .then(() => emit(AFTER));
+    return this.lifecycle.reduce((promise, method) => promise.then(() => (
+      method === ON
+        ? Promise.all([
+          !proc._hpRemoved && proc(...data),
+          emit(method)
+        ])
+        : emit(method)
+    )), Promise.resolve());
   }
 
 }

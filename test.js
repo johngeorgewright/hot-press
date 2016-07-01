@@ -430,6 +430,32 @@ suite('call()', () => {
   });
 });
 
+suite('custom lifecycles', () => {
+  setup(() => {
+    HP.lifecycle = ['foo', 'bar', 'on', 'zob'];
+  });
+
+  teardown(() => {
+    HP.lifecycle = ['before', 'on', 'after'];
+  });
+
+  test('methods are added', () => {
+    HP.should.respondTo('foo');
+    HP.should.respondTo('bar');
+    HP.should.respondTo('zob');
+  });
+
+  test('lifecycles can\'t contain duplicates', () => {
+    (() => HP.lifecycle = ['foo', 'foo', 'on'])
+    .should.throw('Lifecycle contains duplicates (foo)');
+  });
+
+  test('lifecycles must contain an "on" keywords', () => {
+    (() => HP.lifecycle = ['foo', 'bar', 'zob'])
+    .should.throw('Lifecycle must contain an "on" method (foo,bar,zob)');
+  });
+});
+
 function testBeforePause(method) {
   return done => {
     let spy = sinon.spy();
