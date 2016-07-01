@@ -426,16 +426,12 @@ class HotPress {
    * @return HotPress
    */
   ns(name) {
-    name = prependEventName(name, this.prefix);
-    if (namespaces[name]) return namespaces[name];
-    let names = name.split(HIERARCHY_SEPARATOR);
-    let currentName = '';
-    return names.reduce((prev, name, index) => {
-      currentName = names.slice(0, index + 1).join(HIERARCHY_SEPARATOR);
-      return namespaces[currentName] = namespaces[currentName] || new HotPress(
-        prependEventName(name, prev.prefix),
-        prev.lifecycle,
-        prev.timeout
+    let fullName = prependEventName(name, this.prefix);
+    if (namespaces[fullName]) return namespaces[fullName];
+    return name.split(HIERARCHY_SEPARATOR).reduce((parent, name) => {
+      name = prependEventName(name, parent.prefix);
+      return namespaces[name] = namespaces[name] || new HotPress(
+        name, parent.lifecycle, parent.timeout
       );
     }, this);
   }
