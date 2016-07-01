@@ -190,15 +190,46 @@ event.
 
 ### Namespacing
 
-You can create a version of hot-press prefixing all messages with a namepsace.
+You can create a version of hot-press prefixing all messages with a namespace.
 
 ```javascript
 import {ns} from 'hot-press';
-const {emit, on} = ns('foo');
+import {strictEqual} from 'assert';
 
-on('event', eventName => console.log(eventName));
-emit('event');
+let foo = ns('foo');
+
+foo.on('event', eventName => console.log(eventName));
+foo.emit('event');
 // foo.event
+```
+
+Namespaces can be retrieved uses the dot syntax, or chained `ns()` calls.
+
+```javascript
+import {ns} from 'hot-press';
+import {strictEqual} from 'assert';
+
+strictEqual(
+  ns('nested').ns('namespaces'),
+  ns('nested.namespaces'),
+  'Namespaces can be retrieved using dots as hierarchy, or chained calls to `ns`'
+);
+```
+
+Namespaces also cascade their settings.
+
+```javascript
+import {ns} from 'hot-press';
+import {equal} from 'assert';
+
+let foo = ns('foo');
+foo.timeout = 1000;
+
+equal(
+  foo.timeout,
+  foo.ns('bar').timeout,
+  'Namespaces cascade their settings'
+);
 ```
 
 ### Error handling
@@ -252,19 +283,61 @@ call('users.get', {type: 'admin'}).then(users => {
 });
 ```
 
+## Custom Lifecycles
+
+The `before()`, `on()` & `after()` methods don't suffice everyone's needs.
+Luckily enough, for those people, the lifecycle is configurable.
+
+> **Note** you must still include an `on` method. Procedures rely on it.
+
+```javascript
+import HP from 'hot-press';
+
+HP.lifecycle = ['foo', 'bar', 'on', 'after'];
+const {foo, bar, on, after, emit} = HP;
+
+foo('event', console.log);
+bar('event', console.log);
+on('event', console.log);
+after('event', console.log);
+
+emit('event');
+// foo
+// bar
+// on
+// after
+```
+
+The lifecycle is configurable per namespace too.
+
+```javascript
+import {ns} from 'hot-press';
+
+let foo = ns('foo');
+foo.lifecycle = ['prior', 'on', 'end'];
+
+foo.prior('event', console.log);
+foo.on('event', console.log);
+foo.end('event', console.log);
+foo.emit('event');
+// prior
+// on
+// end
+```
+
 ## API
 
 ### `after(String eventName, Function subscriber)`
 
 Register a subscribing function to the end of the event.
 
-### `all(Object<before: String[], on: String[], after: String[]> eventNames, Function subscriber)`
+### `all(Object<[lifecycleName]: String[]> eventNames, Function subscriber)`
 
 Register a subscriber for when all events have been published
 
-### `before(String eventName, Function subscriber)`
+### `call(String procedureName, [...Any]) ==> Promise`
 
-Register a subscribing function to the beginning of the event.
+Call a procedure with the given arguments.
 
 ### `dereg(String procedureName) ==> Number`
 
@@ -273,6 +346,10 @@ Deregisters a procedure.
 ### `emit(String eventName, [Any ...data]) ==> Promise`
 
 Publishes the event and passes all data arguments directly to the subscribers.
+
+### `[lifecycleName](String eventName, Function subscriber)`
+
+Register a subscribing function to that part of the event lifecycle.
 
 ### `ns(String namespace) ==> HotPress`
 
@@ -292,24 +369,20 @@ Register a subscribing function to the event
 
 Registers a subscriber for just one event before it's removed.
 
-### `onceAfter(String eventName, Function subscriber)`
+### `once[LifecycleName](String eventName, Function subscriber)`
 
-Registers a subscriber, to the end of the event lifecycle, for just one event
+Registers a subscriber, to that part of the event lifecycle, for just one event
 before it is removed.
-
-### `onceBefore(String eventName, Function subscriber)`
-
-Registers a subscriber, to the beginning of the event lifecycle, for just one
-event before it is removed.
 
 ### `triggers(String eventName, Array eventNames)`
 
 When the event has been published, publish an array of of other events.
 
+### `triggers[lifecycleName](String eventName, Function subscriber)`
+
+When the event's lifecycle part has been published, publish an array of other
+events.
+
 ### `reg(String procedureName, Function procedure)`
 
 Registers a procedure.
-
-### `call(String procedureName, [...Any]) ==> Promise`
-
-Call a procedure with the given arguments.
