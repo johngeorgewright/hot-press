@@ -95,7 +95,7 @@ function getHierarchy(message) {
  * @param String prefix
  * @return String
  */
-function prependEventName(name, prefix) {
+function prependHierarchy(name, prefix) {
   return prefix ? `${prefix}.${name}` : name;
 }
 
@@ -108,7 +108,7 @@ function prependEventName(name, prefix) {
  */
 function onPart(part, message, fn) {
   fn._hpRemoved = false;
-  getListenersFor.call(this, prependEventName(message, this.prefix))[part].push(fn);
+  getListenersFor.call(this, prependHierarchy(message, this.prefix))[part].push(fn);
 }
 
 /**
@@ -173,7 +173,7 @@ function createEmitter(message, data) {
 
   const promise = fn => Promise
     .race([errorAfterMS(this.timeout), call(fn)])
-    .catch(error => emit.call(this, prependEventName(message, ERROR), [error]));
+    .catch(error => emit.call(this, prependHierarchy(message, ERROR), [error]));
 
   return part => Promise.all(flatten(
     hierarchy.map(message => getListenersFor.call(this, message)[part].map(promise))
@@ -400,7 +400,7 @@ class HotPress {
    * @return Number
    */
   off(message, fn) {
-    message = prependEventName(message, this.prefix);
+    message = prependHierarchy(message, this.prefix);
     return fn
       ? removeListener.call(this, message, fn)
       : removeAllListeners.call(this, message);
@@ -414,7 +414,7 @@ class HotPress {
    * @return Promise
    */
   emit(message, ...data) {
-    message = prependEventName(message, this.prefix);
+    message = prependHierarchy(message, this.prefix);
     return emit.call(this, message, data);
   }
 
@@ -426,10 +426,10 @@ class HotPress {
    * @return HotPress
    */
   ns(name) {
-    let fullName = prependEventName(name, this.prefix);
+    let fullName = prependHierarchy(name, this.prefix);
     if (namespaces[fullName]) return namespaces[fullName];
     return name.split(HIERARCHY_SEPARATOR).reduce((parent, name) => {
-      name = prependEventName(name, parent.prefix);
+      name = prependHierarchy(name, parent.prefix);
       return namespaces[name] = namespaces[name] || new HotPress(
         name, parent.lifecycle, parent.timeout
       );
@@ -444,7 +444,7 @@ class HotPress {
    * @throws HotPressExistingProcedureError
    */
   reg(name, proc) {
-    name = prependEventName(name, this.prefix);
+    name = prependHierarchy(name, this.prefix);
     proc._hpRemove = false;
     if (procedures[name]) throw new HotPressExistingProcedureError(name);
     procedures[name] = proc;
@@ -457,7 +457,7 @@ class HotPress {
    * @return Number
    */
   dereg(name) {
-    name = prependEventName(name, this.prefix);
+    name = prependHierarchy(name, this.prefix);
     if (procedures[name]) {
       procedures[name]._hpRemoved = true;
       delete procedures[name];
@@ -474,7 +474,7 @@ class HotPress {
    * @return Promise
    */
   call(name, ...data) {
-    name = prependEventName(name, this.prefix);
+    name = prependHierarchy(name, this.prefix);
     let emit = createEmitter.call(this, name, data);
     let proc = procedures[name] || (() => {});
     return this.lifecycle.reduce((promise, method) => promise.then(() => (
