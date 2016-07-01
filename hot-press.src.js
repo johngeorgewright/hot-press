@@ -32,6 +32,13 @@ let listeners = {};
 let procedures = {};
 
 /**
+ * Namespaced HotPress instances.
+ *
+ * @var Object<String: HotPress>
+ */
+let namespaces = {};
+
+/**
  * Returns all the listeners for a given message. The returned value will be an
  * object whose keys are 'before', 'on' and 'after' of which each will contain
  * an array of functions/listeners.
@@ -418,12 +425,19 @@ class HotPress {
    * @param String namespace
    * @return HotPress
    */
-  ns(namespace) {
-    return new HotPress(
-      prependEventName(namespace, this.prefix),
-      this.lifecycle,
-      this.timeout
-    );
+  ns(name) {
+    name = prependEventName(name, this.prefix);
+    if (namespaces[name]) return namespaces[name];
+    let names = name.split(HIERARCHY_SEPARATOR);
+    let currentName = '';
+    return names.reduce((prev, name, index) => {
+      currentName = names.slice(0, index + 1).join(HIERARCHY_SEPARATOR);
+      return namespaces[currentName] = namespaces[currentName] || new HotPress(
+        prependEventName(name, prev.prefix),
+        prev.lifecycle,
+        prev.timeout
+      );
+    }, this);
   }
 
   /**

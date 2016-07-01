@@ -5,6 +5,7 @@ const chai = require('chai');
 const HP = require('./hot-press.src');
 const sinon = require('sinon');
 const sinonChai = require('sinon-chai');
+const functions = require('lodash.functions');
 
 chai.use(sinonChai);
 chai.should();
@@ -325,37 +326,47 @@ suite('triggersOnceAfter()', () => {
 
 suite('ns()', () => {
   let spy;
-  let ns;
+  let foo;
 
   setup(() => {
     spy = sinon.spy();
-    ns = HP.ns('foo');
+    foo = HP.ns('foo');
   });
 
   test('it returns an object with all required methods', () => {
-    ns.should.be.an('object');
-    [
-      'after', 'all', 'before', 'call', 'dereg', 'emit', 'ns', 'off', 'on',
-      'once', 'onceAfter', 'onceBefore', 'triggers', 'triggersAfter',
-      'triggersBefore', 'triggersOnce', 'triggersOnceAfter',
-      'triggersOnceBefore', 'reg'
-    ].forEach(name => ns.should.respondTo(name));
+    foo.should.be.an('object');
+    functions(HP)
+      .filter(fn => !/HotPress[a-zA-Z]*Error/.test(fn))
+      .forEach(name => foo.should.respondTo(name));
   });
 
   test('it decorates the `on` method with your namespace', () => {
-    ns.on('bar', spy);
+    foo.on('bar', spy);
     return HP
       .emit('foo.bar')
-      .then(() => ns.emit('bar'))
+      .then(() => foo.emit('bar'))
       .then(() => spy.should.have.been.calledTwice);
   });
 
   test('it decorates trigger methods', () => {
-    ns.on('bar', spy);
-    ns.triggers('boo', ['bar']);
+    foo.on('bar', spy);
+    foo.triggers('boo', ['bar']);
     return HP
       .emit('foo.boo')
       .then(() => spy.should.have.been.calledOnce);
+  });
+
+  test('it is basically a singleton factory', () => {
+    foo.should.equal(HP.ns('foo'), 'Objects are not exactly the same');
+    foo.ns('bar').should.equal(HP.ns('foo.bar'));
+  });
+
+  test('properties cascade on creation of a new namespace', () => {
+    foo.timeout = 500;
+    foo.lifecycle = ['mung', 'on', 'face'];
+    let zob = foo.ns('zob');
+    zob.timeout.should.equal(500);
+    zob.lifecycle.should.eql(['mung', 'on', 'face']);
   });
 });
 
