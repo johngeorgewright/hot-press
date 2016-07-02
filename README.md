@@ -325,6 +325,11 @@ foo.emit('event');
 // end
 ```
 
+## Why the wierd name?
+
+Mostly because the good ones were already taken and there's arguably a relation
+between publishing/subscribing to magazines and papers.
+
 ## API
 
 ### `after(String eventName, Function subscriber)`
