@@ -305,6 +305,14 @@ class HotPress {
      * @prop Number timeout
      */
     this.timeout = timeout;
+
+    this.all = this.all.bind(this);
+    this.call = this.call.bind(this);
+    this.dereg = this.dereg.bind(this);
+    this.emit = this.emit.bind(this);
+    this.ns = this.ns.bind(this);
+    this.off = this.off.bind(this);
+    this.reg = this.reg.bind(this);
   }
 
   get lifecycle() {
