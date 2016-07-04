@@ -11,7 +11,7 @@
     "lint-w": "nodemon -x 'npm run lint' -w hot-press.src.js -w test.js",
     "prepublish": "npm test && npm run build",
     "spec": "istanbul cover _mocha -- --ui tdd --check-leaks",
-    "spec-w": "mocha --ui tdd --check-leaks --watch --growl --reporter dot",
+    "spec-w": "mocha --ui tdd --check-leaks --watch --growl --reporter nyan",
     "test": "npm run lint && istanbul cover _mocha --report lcovonly -- --ui tdd --check-leaks"
   },
   "keywords": [
