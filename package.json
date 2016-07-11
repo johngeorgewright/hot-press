@@ -1,6 +1,6 @@
 {
   "name": "hot-press",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "Event lifecycle management",
   "main": "hot-press.js",
   "scripts": {
@@ -34,6 +34,5 @@
     "sinon": "^1.17.4",
     "sinon-chai": "^2.8.0"
   },
-  "dependencies": {
-  }
+  "dependencies": {}
 }
