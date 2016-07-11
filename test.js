@@ -82,11 +82,13 @@ suite('on()', () => {
 
   test('error handling', () => {
     let spy = sinon.spy();
-    HP.on('e', () => { throw new Error('should be swallowed'); });
+    let error = new Error('should be swallowed');
+    HP.on('e', () => { throw error; });
     HP.on('error.e', spy);
     return HP
       .emit('e')
       .then(() => spy.should.have.been.calledOnce)
+      .then(() => spy.should.have.been.calledWithExactly('error.e', error))
       .then(() => HP.off('error.e'));
   });
 });
@@ -394,12 +396,10 @@ suite('dereg()', () => {
   });
 
   test('the process is unregistered', () => {
+    HP.dereg('procedure');
     return HP
       .call('procedure')
-      .then(() => spy.should.have.been.calledOnce)
-      .then(() => HP.dereg('procedure'))
-      .then(() => HP.call('procedure'))
-      .then(() => spy.should.have.been.calledOnce);
+      .catch(error => error.message.should.equal('The procedure "procedure" doesn\'t exist'));
   });
 
   test('the return value represents the amount of processes removed', () => {
@@ -412,7 +412,7 @@ suite('call()', () => {
   let spy;
 
   setup(() => {
-    spy = sinon.spy();
+    spy = sinon.stub().returns('YAY');
     HP.reg('proc', spy);
   });
 
@@ -427,30 +427,40 @@ suite('call()', () => {
   test('the process is called', () => {
     let data = ['i', 'am', 'data'];
     return HP.call('proc', data).then(() => {
+      spy.should.have.been.calledOnce;
       spy.should.have.been.calledWithExactly(data);
     });
   });
 
-  test('an event lifecycle is triggered', () => {
+  test('the result is given back', () => {
+    return HP.call('proc').then(data => data.should.equal('YAY'));
+  });
+
+  test('an event lifecycle is triggered', done => {
     HP.before('proc', spy);
     HP.on('proc', spy);
-    HP.after('proc', spy);
-    return HP
+    HP.after('proc', () => done());
+    HP
       .call('proc')
-      .then(() => spy.callCount.should.equal(4));
+      .then(() => spy.callCount.should.equal(3));
   });
 });
 
 suite('custom lifecycles', () => {
+  let prevLifecycle;
+
   setup(() => {
-    HP.lifecycle = ['foo', 'bar', 'on', 'zob'];
+    prevLifecycle = HP.lifecycle;
   });
 
   teardown(() => {
-    HP.lifecycle = ['before', 'on', 'after'];
+    HP.lifecycle = prevLifecycle;
   });
 
   test('methods are added', () => {
+    HP.lifecycle = ['foo', 'bar', 'on', 'zob'];
+    HP.should.not.respondTo('before');
+    HP.should.not.respondTo('after');
     HP.should.respondTo('foo');
     HP.should.respondTo('bar');
     HP.should.respondTo('zob');
@@ -463,7 +473,7 @@ suite('custom lifecycles', () => {
 
   test('lifecycles must contain an "on" keywords', () => {
     (() => HP.lifecycle = ['foo', 'bar', 'zob'])
-    .should.throw('Lifecycle must contain an "on" method (foo,bar,zob)');
+    .should.throw('Lifecycle (foo,bar,zob) must contain an "on" method');
   });
 });
 

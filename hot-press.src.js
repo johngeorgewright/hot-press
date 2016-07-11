@@ -1,8 +1,5 @@
 'use strict';
 
-const flatten = require('lodash.flatten');
-const upperFirst = require('lodash.upperfirst');
-const assert = require('assert');
 const ERROR = 'error';
 const ON = 'on';
 const HIERARCHY_SEPARATOR = '.';
@@ -37,6 +34,26 @@ let procedures = {};
  * @var Object<String: HotPress>
  */
 let namespaces = {};
+
+/**
+ * Flattens an 2 dimensional array.
+ *
+ * @param Any[] arr
+ * @return Any[]
+ */
+function flatten(arr) {
+  return arr.reduce((a, b) => a.concat(b), []);
+}
+
+/**
+ * Transforms the 1st character of a string to uppercase.
+ *
+ * @param String str
+ * @return String
+ */
+function upperFirst(str) {
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
 
 /**
  * Returns all the listeners for a given message. The returned value will be an
@@ -202,15 +219,10 @@ function emit(message, data) {
  * @return Any[]
  */
 function findDuplicates(arr) {
-  let uniques = arr
-    .map(it => ({count: 1, item: it}))
-    .reduce(
-      (acc, it) => Object.assign(acc, {[it.item]: (acc[it.item] || 0) + it.count}),
-      {}
-    );
-  return Object
-    .keys(uniques)
-    .filter(it => uniques[it] > 1);
+  let dupCounts = arr.reduce((dupCounts, item) => Object.assign(dupCounts, {
+    [item]: (dupCounts[item] || 0) + 1
+  }), {});
+  return Object.keys(dupCounts).filter(it => dupCounts[it] > 1);
 }
 
 /**
@@ -270,6 +282,24 @@ function triggerMethodName(method) {
   return method === ON ? 'triggers' : `triggers${upperFirst(method)}`;
 }
 
+function startOfLifecycle() {
+  let start = [];
+  let lifecycle = this.lifecycle.slice();
+  for (let part = lifecycle.shift(); part !== ON; part = lifecycle.shift()) {
+    start.push(part);
+  }
+  return start;
+}
+
+function endOfLifecycle() {
+  let end = [];
+  let lifecycle = this.lifecycle.slice();
+  for (let part = lifecycle.pop(); part !== ON; part = lifecycle.pop()) {
+    end.unshift(part);
+  }
+  return end;
+}
+
 /**
  * The exposable methods for each HotPress namespace.
  *
@@ -324,15 +354,13 @@ class HotPress {
     let duplicates = findDuplicates(lifecycle);
     this._lifecycle = lifecycle;
 
-    assert(
-      !duplicates.length,
-      `Lifecycle contains duplicates (${duplicates})`
-    );
+    if (duplicates.length) {
+      throw new Error(`Lifecycle contains duplicates (${duplicates})`);
+    }
 
-    assert(
-      ~lifecycle.indexOf(ON),
-      `Lifecycle must contain an "on" method (${lifecycle})`
-    );
+    if (!~lifecycle.indexOf(ON)) {
+      throw new Error(`Lifecycle (${lifecycle}) must contain an "on" method`);
+    }
 
     _lifecycle.forEach(method => { delete this[method]; });
 
@@ -483,16 +511,22 @@ class HotPress {
    */
   call(name, ...data) {
     name = prependHierarchy(name, this.prefix);
-    let emit = createEmitter.call(this, name, data);
-    let proc = procedures[name] || (() => {});
-    return this.lifecycle.reduce((promise, method) => promise.then(() => (
-      method === ON
-        ? Promise.all([
-          !proc._hpRemoved && proc(...data),
-          emit(method)
-        ])
-        : emit(method)
-    )), Promise.resolve());
+    const emit = createEmitter.call(this, name, data);
+    const lifecycleReducer = (promise, method) => (
+      promise.then(() => emit(method))
+    );
+    const proc = procedures[name] || (() => {
+      throw new HotPressNonExistingProcedureError(name);
+    });
+    let promise = startOfLifecycle.call(this).reduce(lifecycleReducer, Promise.resolve());
+    promise = promise
+      .then(() => Promise.all([
+        !proc._hpRemoved && proc(...data),
+        emit(ON)
+      ]))
+      .then(([result]) => result);
+    endOfLifecycle.call(this).reduce(lifecycleReducer, promise);
+    return promise;
   }
 
 }
@@ -509,6 +543,13 @@ class HotPressExistingProcedureError extends Error {
   }
 }
 
-module.exports = Object.assign(
-  new HotPress(), {HotPressTimeoutError, HotPressExistingProcedureError}
-);
+class HotPressNonExistingProcedureError extends Error {
+  constructor(name) {
+    super(`The procedure "${name}" doesn't exist`);
+  }
+}
+
+module.exports = Object.assign(new HotPress(), {
+  HotPressTimeoutError, HotPressExistingProcedureError,
+  HotPressNonExistingProcedureError
+});

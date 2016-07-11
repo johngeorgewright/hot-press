@@ -35,7 +35,5 @@
     "sinon-chai": "^2.8.0"
   },
   "dependencies": {
-    "lodash.flatten": "^4.2.0",
-    "lodash.upperfirst": "^4.2.0"
   }
 }
