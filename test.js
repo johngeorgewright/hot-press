@@ -32,19 +32,6 @@ suite('emit()', () => {
     HP.after('e', resolve);
     return HP.emit('e').then(() => spy.should.have.been.calledThrice);
   });
-
-  test('subscription hierarchy', () => {
-    let spyA = sinon.spy();
-    let spyB = sinon.spy();
-    HP.on('e.f', spyA);
-    HP.on('e', spyB);
-    return HP.emit('e.f')
-      .then(() => spyA.should.have.been.calledOnce)
-      .then(() => spyB.should.have.been.calledOnce)
-      .then(() => spyA.should.have.been.calledWithExactly('e.f'))
-      .then(() => spyB.should.have.been.calledWithExactly('e.f'))
-      .then(() => HP.off('e.f'));
-  });
 });
 
 suite('on()', () => {
@@ -77,6 +64,8 @@ suite('on()', () => {
     HP.on('e.*', spy);
     return HP.emit('e.f')
       .then(() => spy.should.have.been.calledWith('e.f'))
+      .then(() => HP.emit('e.f.g'))
+      .then(() => spy.should.have.been.calledWith('e.f.g'))
       .then(() => HP.off('e.*'));
   });
 

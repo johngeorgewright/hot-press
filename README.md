@@ -46,30 +46,17 @@ emit('event2');
 
 ### Subscription hierarchy
 
-Dots symbolize subscription hierarchy.
+Dots symbolize subscription hierarchy. Using the `*` operator, you can subscribe
+to all events under that hierarchy.
 
 ```javascript
 import {emit, on} from 'hot-press';
 
-on('foo.bar', message => console.log(message));
-on('foo', message => console.log(message));
-emit('foo.bar');
-// 'foo.bar'
-// 'foo.bar'
-```
-
-### Subscribing with wildcards
-
-Using the `*` operator, you can subscribe to all events.
-
-```javascript
-import {emit, on} from 'hot-press';
-
-on('*', () => console.log(2));
-on('e.*', () => console.log(1));
+on('*', e => console.log(2, e));
+on('e.*', e => console.log(1, e));
 emit('e.f');
-// 1
-// 2
+// 1 e.f
+// 2 e.f
 ```
 
 ### Unsubscribe

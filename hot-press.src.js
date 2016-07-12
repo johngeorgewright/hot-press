@@ -1,5 +1,6 @@
 'use strict';
 
+const WILDCARD = '*';
 const ERROR = 'error';
 const ON = 'on';
 const HIERARCHY_SEPARATOR = '.';
@@ -87,21 +88,24 @@ function getAllListenersFor(message) {
 
 /**
  * Returns a list of messages that should be called in order for a specific
- * message
+ * message.
+ *
+ * IE:
+ * getHierarchy('a.b.c.d');
+ * // ==> ['a.b.c.d', 'a.b.c.*', 'a.b.*', 'a.*', '*']
  *
  * @param String message
  * @return String[]
  */
 function getHierarchy(message) {
   let parts = message.split(HIERARCHY_SEPARATOR);
-  let hierarchy = [parts[0], '*'];
+  let hierarchy = [WILDCARD];
   parts.reduce((message, part) => {
     let prefix = message + HIERARCHY_SEPARATOR;
-    let newMessage = prefix + part;
-    let wildcard = prefix + '*';
-    hierarchy.unshift(newMessage, wildcard);
-    return newMessage;
+    hierarchy.unshift(prefix + WILDCARD);
+    return prefix + part;
   });
+  hierarchy.unshift(message);
   return hierarchy;
 }
 
