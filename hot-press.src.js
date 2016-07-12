@@ -151,12 +151,10 @@ function oncePart(subscribe, message, fn) {
  * @return Promise
  */
 function errorAfterMS(timeout) {
-  return new Promise((_, reject) => {
-    if (typeof timeout === 'number') setTimeout(
-      () => reject(new HotPressTimeoutError(timeout)),
-      timeout
-    );
-  });
+  return new Promise((_, reject) => setTimeout(
+    () => reject(new HotPressTimeoutError(timeout)),
+    timeout
+  ));
 }
 
 /**
@@ -183,14 +181,17 @@ function triggersPart(subscribe, message, triggers) {
  */
 function createEmitter(message, data) {
   const hierarchy = getHierarchy(message);
+  const errorMessage = prependHierarchy(message, ERROR);
 
   const call = fn => Promise
     .resolve()
     .then(() => !fn._hpRemoved && fn(message, ...data));
 
-  const promise = fn => Promise
-    .race([errorAfterMS(this.timeout), call(fn)])
-    .catch(error => emit.call(this, prependHierarchy(message, ERROR), [error]));
+  const promise = typeof this.timeout === 'undefined'
+    ? fn => Promise.resolve(call(fn))
+    : fn => Promise
+        .race([errorAfterMS(this.timeout), call(fn)])
+        .catch(error => emit.call(this, errorMessage, [error]));
 
   return part => Promise.all(flatten(
     hierarchy.map(message => getListenersFor.call(this, message)[part].map(promise))
