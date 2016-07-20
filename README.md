@@ -335,6 +335,10 @@ Call a procedure with the given arguments.
 
 Deregisters a procedure.
 
+### `deregAll() ==> Number`
+
+Removes **all** registered procedures.
+
 ### `emit(String eventName, [Any ...data]) ==> Promise`
 
 Publishes the event and passes all data arguments directly to the subscribers.

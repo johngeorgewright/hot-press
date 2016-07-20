@@ -397,6 +397,26 @@ suite('dereg()', () => {
   });
 });
 
+suite('deregAll()', () => {
+  let spy;
+
+  setup(() => {
+    spy = sinon.spy();
+    HP.reg('procedure1', spy);
+    HP.reg('procedure2', spy);
+  });
+
+  test('it will remove all registered procedures', () => {
+    HP.deregAll();
+    return HP
+      .call('procedure1')
+      .catch(() => {})
+      .then(() => HP.call('procedure2'))
+      .catch(() => {})
+      .then(() => spy.should.not.have.been.called);
+  });
+});
+
 suite('call()', () => {
   let spy;
 

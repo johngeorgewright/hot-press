@@ -120,6 +120,10 @@ function prependHierarchy(name, prefix) {
   return prefix ? `${prefix}.${name}` : name;
 }
 
+function removePrefix(name, prefix) {
+  return prefix ? name.substr(prefix.length + HIERARCHY_SEPARATOR.length) : name;
+}
+
 /**
  * Adds a listener to a specific part of an event's lifecycle.
  *
@@ -303,6 +307,13 @@ function endOfLifecycle() {
     end.unshift(part);
   }
   return end;
+}
+
+function getProcedures() {
+  return Object.keys(procedures).reduce((acc, name) => {
+    if (name.startsWith(this.prefix)) acc[removePrefix(name)] = procedures[name];
+    return acc;
+  }, {});
 }
 
 /**
@@ -505,6 +516,17 @@ class HotPress {
       return 1;
     }
     return 0;
+  }
+
+  /**
+   * Deregesters all processes.
+   *
+   * @return Number
+   */
+  deregAll() {
+    return Object
+      .keys(getProcedures.call(this))
+      .reduce((removed, name) => removed + this.dereg(name), 0);
   }
 
   /**
