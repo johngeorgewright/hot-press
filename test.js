@@ -1,5 +1,6 @@
+/* eslint-env mocha */
+/* eslint max-len:off, no-unused-expressions:off, require-jsdoc:off */
 'use strict';
-/*eslint-env mocha*/
 
 const chai = require('chai');
 const HP = require('./hot-press.src');
@@ -72,7 +73,9 @@ suite('on()', () => {
   test('error handling', () => {
     let spy = sinon.spy();
     let error = new Error('should be swallowed');
-    HP.on('e', () => { throw error; });
+    HP.on('e', () => {
+      throw error;
+    });
     HP.on('error.e', spy);
     return HP
       .emit('e')
@@ -476,12 +479,16 @@ suite('custom lifecycles', () => {
   });
 
   test('lifecycles can\'t contain duplicates', () => {
-    (() => HP.lifecycle = ['foo', 'foo', 'on'])
+    (() => {
+      HP.lifecycle = ['foo', 'foo', 'on'];
+    })
     .should.throw('Lifecycle contains duplicates (foo)');
   });
 
   test('lifecycles must contain an "on" keywords', () => {
-    (() => HP.lifecycle = ['foo', 'bar', 'zob'])
+    (() => {
+      HP.lifecycle = ['foo', 'bar', 'zob'];
+    })
     .should.throw('Lifecycle (foo,bar,zob) must contain an "on" method');
   });
 });
