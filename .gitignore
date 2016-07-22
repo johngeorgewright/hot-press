@@ -2,3 +2,4 @@ coverage
 hot-press.js
 *.log
 node_modules
+out
