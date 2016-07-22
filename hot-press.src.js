@@ -363,7 +363,7 @@ function startOfLifecycle() {
  * @return {String[]} The ordered lifecycle parts
  */
 function endOfLifecycle() {
-  return this.lifecycle.slice(this.lifecycle.indexOf(ON));
+  return this.lifecycle.slice(this.lifecycle.indexOf(ON) + 1);
 }
 
 /**
@@ -412,7 +412,7 @@ class HotPress {
   }
 
   get lifecycle() {
-    return this._lifecycle;
+    return this._lifecycle.slice();
   }
 
   set lifecycle(lifecycle) {
