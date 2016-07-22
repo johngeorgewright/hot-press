@@ -631,7 +631,7 @@ class HotPressTimeoutError extends Error {
  * @extends Error
  * @param  {String} name The name of the procedure
  */
-export class HotPressExistingProcedureError extends Error {
+class HotPressExistingProcedureError extends Error {
   constructor(name) {
     super(`The procedure "${name}" is already registered`);
   }
@@ -644,7 +644,7 @@ export class HotPressExistingProcedureError extends Error {
  * @extends Error
  * @param  {String} name The name of the procedure
  */
-export class HotPressNonExistingProcedureError extends Error {
+class HotPressNonExistingProcedureError extends Error {
   constructor(name) {
     super(`The procedure "${name}" doesn't exist`);
   }
