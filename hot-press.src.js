@@ -353,12 +353,7 @@ function triggerMethodName(method) {
  * @return {String[]} The ordered lifecycle parts
  */
 function startOfLifecycle() {
-  let start = [];
-  let lifecycle = this.lifecycle.slice();
-  for (let part = lifecycle.shift(); part !== ON; part = lifecycle.shift()) {
-    start.push(part);
-  }
-  return start;
+  return this.lifecycle.slice(0, this.lifecycle.indexOf(ON));
 }
 
 /**
@@ -368,12 +363,7 @@ function startOfLifecycle() {
  * @return {String[]} The ordered lifecycle parts
  */
 function endOfLifecycle() {
-  let end = [];
-  let lifecycle = this.lifecycle.slice();
-  for (let part = lifecycle.pop(); part !== ON; part = lifecycle.pop()) {
-    end.unshift(part);
-  }
-  return end;
+  return this.lifecycle.slice(this.lifecycle.indexOf(ON));
 }
 
 /**
