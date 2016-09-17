@@ -30,7 +30,7 @@
     "eslint-config-google": "^0.6.0",
     "istanbul": "^0.4.4",
     "lodash.functions": "^4.1.1",
-    "mocha": "^2.5.3",
+    "mocha": "^3.0.2",
     "mocha-lcov-reporter": "^1.2.0",
     "sinon": "^1.17.4",
     "sinon-chai": "^2.8.0"
