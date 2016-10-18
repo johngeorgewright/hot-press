@@ -27,7 +27,7 @@
     "chai": "^3.5.0",
     "coveralls": "^2.11.9",
     "eslint": "^3.0.0",
-    "eslint-config-google": "^0.6.0",
+    "eslint-config-google": "^0.7.0",
     "istanbul": "^0.4.4",
     "lodash.functions": "^4.1.1",
     "mocha": "^3.0.2",
