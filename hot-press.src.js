@@ -101,6 +101,7 @@ function upperFirst(str) {
  * @private
  * @param {String} message - The event name/message
  * @return {Object} The event listeners grouped by lifecycle parts
+ * @this HotPress
  */
 function getListenersFor(message) {
   if (!listeners[message]) {
@@ -190,6 +191,7 @@ function onPart(part, message, fn) {
  * @param {Function} subscribe The subscriber function
  * @param {String} message The event name/message
  * @param {Function} fn The listener
+ * @this HotPress
  */
 function oncePart(subscribe, message, fn) {
   let subscriber = (...args) => {
@@ -385,14 +387,16 @@ function getProcedures() {
  * The exposable methods for each HotPress namespace.
  * @private
  * @prop {String}   prefix    The prefix to add to all messages
- * @prop {String[]} lifecycle The lifecycle list
  * @prop {Number}   timeout   Timeout to stop long processes
- * @param {String}   prefix    The namespace prefix
- * @param {String[]} lifecycle The lifecycle
- * @param {Number}   timeout   The timeout setting
  */
 class HotPress {
 
+  /**
+   * @constructor
+   * @param {String}   prefix    The namespace prefix
+   * @param {String[]} lifecycle The lifecycle
+   * @param {Number}   timeout   The timeout setting
+   */
   constructor(
     prefix = '',
     lifecycle = DEFAULT_LIFECYCLE,
@@ -412,10 +416,17 @@ class HotPress {
     this.reg = this.reg.bind(this);
   }
 
+  /**
+   * @prop {String[]} lifecycle The lifecycle list
+   */
   get lifecycle() {
     return this._lifecycle.slice();
   }
 
+  /**
+   * Lifecycle setter
+   * @param {String[]} lifecycle The lifecycle list
+   */
   set lifecycle(lifecycle) {
     let {_lifecycle} = this;
     let duplicates = findDuplicates(lifecycle);
@@ -457,7 +468,8 @@ class HotPress {
    * }, ({foo, bar, another, event}) => {
    *   // You'll receive data for each event that fired
    * });
-   * @param {Object}   messages An object of event names keyed by lifecycle parts
+   * @param {Object}   messages An object of event names keyed by lifecycle
+   *                   parts
    * @param {Function} fn       The listener
    */
   all(messages, fn) {
@@ -511,7 +523,8 @@ class HotPress {
    * Adds a listener to the end of the event lifecycle for just one emittion.
    * @param {String} message The event name/message
    * @param {...Any} data    Parameters to pass to the listeners
-   * @return {Promise}       A promised resolved once the lifecycle has completed
+   * @return {Promise}       A promised resolved once the lifecycle has
+   *                         completed
    */
   emit(message, ...data) {
     message = prependHierarchy(message, this.prefix);
@@ -611,18 +624,27 @@ class HotPress {
  * @param  {Number} ms The amount of milliseconds
  */
 class HotPressTimeoutError extends Error {
+  /**
+   * @constructor
+   * @param {Number} ms The milliseconds that exceeded to cause the timeout
+   */
   constructor(ms) {
     super(`Exceeded ${ms}ms`);
   }
 }
 
 /**
- * Error to be thrown when registering a procedure that has already been registerd.
+ * Error to be thrown when registering a procedure that has already been
+ * registerd.
  * @class HotPressExistingProcedureError
  * @extends Error
  * @param  {String} name The name of the procedure
  */
 class HotPressExistingProcedureError extends Error {
+  /**
+   * @constructor
+   * @param {String} name The name of the procedure
+   */
   constructor(name) {
     super(`The procedure "${name}" is already registered`);
   }
@@ -636,6 +658,10 @@ class HotPressExistingProcedureError extends Error {
  * @param  {String} name The name of the procedure
  */
 class HotPressNonExistingProcedureError extends Error {
+  /**
+   * @constructor
+   * @param {String} name The name of the procedure
+   */
   constructor(name) {
     super(`The procedure "${name}" doesn't exist`);
   }
