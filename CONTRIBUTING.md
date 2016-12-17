@@ -2,7 +2,7 @@
 
 ## Developing
 
-It's easiest to use Node v6. If you have nvm install, simply run `nvm use` from
+It's easiest to use Node v7. If you have nvm install, simply run `nvm use` from
 within the project directory to switch to the correct version.
 
 Run the tests with `npm test`. If you would like to run tests every time a file
