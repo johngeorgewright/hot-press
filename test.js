@@ -393,9 +393,9 @@ suite('dereg()', () => {
 
   test('the process is unregistered', () => {
     dereg('procedure');
-    return HP
-      .call('procedure')
-      .catch(error => error.message.should.equal('The procedure "procedure" doesn\'t exist'));
+    return call('procedure').catch(error => {
+      error.message.should.equal('The procedure "procedure" doesn\'t exist');
+    });
   });
 
   test('the return value represents the amount of processes removed', () => {
@@ -415,12 +415,15 @@ suite('deregAll()', () => {
 
   test('it will remove all registered procedures', () => {
     deregAll();
-    return HP
-      .call('procedure1')
+    return call('procedure1')
       .catch(() => {})
       .then(() => call('procedure2'))
       .catch(() => {})
       .then(() => spy.should.not.have.been.called);
+  });
+
+  test('returns the amount of procedures removed', () => {
+    deregAll().should.equal(2);
   });
 });
 
@@ -434,6 +437,7 @@ suite('call()', () => {
 
   teardown(() => {
     dereg('proc');
+    off('proc');
   });
 
   test('returns a Promise', () => {
@@ -455,10 +459,8 @@ suite('call()', () => {
   test('an event lifecycle is triggered', done => {
     before('proc', spy);
     on('proc', spy);
-    after('proc', () => done());
-    HP
-      .call('proc')
-      .then(() => spy.callCount.should.equal(3));
+    after('proc', result => done());
+    call('proc').then(() => spy.callCount.should.equal(3));
   });
 });
 

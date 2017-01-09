@@ -595,24 +595,36 @@ class HotPress {
    */
   call(name, ...data) {
     name = prependHierarchy(name, this.prefix);
+
     const emit = createEmitter.call(this, name, data);
+
+    let result;
+
     const lifecycleReducer = (promise, method) => (
       promise.then(() => emit(method))
     );
+
     const proc = procedures[name] || (() => {
       throw new HotPressNonExistingProcedureError(name);
     });
+
     let promise = startOfLifecycle
       .call(this)
       .reduce(lifecycleReducer, Promise.resolve());
+
     promise = promise
       .then(() => Promise.all([
         !proc._hpRemoved && proc(...data),
         emit(ON)
       ]))
-      .then(([result]) => result);
-    endOfLifecycle.call(this).reduce(lifecycleReducer, promise);
-    return promise;
+      .then(([r]) => {
+        result = r;
+      });
+
+    return endOfLifecycle
+      .call(this)
+      .reduce(lifecycleReducer, promise)
+      .then(() => result);
   }
 
 }
