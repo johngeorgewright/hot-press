@@ -10,6 +10,8 @@ Hot Press is an event lifecycle management library for Node.js.
 
 ## Installation
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/johngeorgewright/hot-press.svg)](https://greenkeeper.io/)
+
 ```
 npm i hot-press
 ```
