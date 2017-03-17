@@ -32,7 +32,7 @@
     "lodash.functions": "^4.3.0",
     "mocha": "^3.2.0",
     "mocha-lcov-reporter": "^1.2.0",
-    "sinon": "^1.17.7",
+    "sinon": "^2.0.0",
     "sinon-chai": "^2.8.0"
   },
   "dependencies": {}
