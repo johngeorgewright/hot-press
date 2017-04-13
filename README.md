@@ -1,4 +1,4 @@
-<img src="https://raw.githubusercontent.com/johngeorgewright/hot-press/master/logo.png" height="200" align="right" />
+<img src="https://raw.githubusercontent.com/johngeorgewright/hot-press/master/logo.png" align="right" />
 
 # Hot Press
 
