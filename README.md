@@ -1,6 +1,4 @@
-<div class="float-right">
-  <img src="https://raw.githubusercontent.com/johngeorgewright/hot-press/master/logo.png" height="200" />
-</div>
+<img src="https://raw.githubusercontent.com/johngeorgewright/hot-press/master/logo.png" height="200" align="right" />
 
 # Hot Press
 
