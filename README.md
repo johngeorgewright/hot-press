@@ -1,4 +1,8 @@
-![Hot Press Logo](https://raw.githubusercontent.com/johngeorgewright/hot-press/master/logo.png)
+<div class="float-right">
+  <img src="https://raw.githubusercontent.com/johngeorgewright/hot-press/master/logo.png" height="200" />
+</div>
+
+# Hot Press
 
 [![Coverage Status](https://img.shields.io/coveralls/johngeorgewright/hot-press/master.svg?style=flat-square)](https://coveralls.io/github/johngeorgewright/hot-press?branch=master)
 [![Build Status](https://img.shields.io/travis/johngeorgewright/hot-press/master.svg?style=flat-square)](https://travis-ci.org/johngeorgewright/hot-press)
