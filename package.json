@@ -9,7 +9,7 @@
     "cover": "cat ./coverage/lcov.info | coveralls && rm -rf ./coverage",
     "lint": "eslint hot-press.src.js test.js",
     "lint-w": "nodemon -x 'npm run lint' -w hot-press.src.js -w test.js",
-    "prepublish": "npm test && npm run build",
+    "prepare": "npm test && npm run build",
     "spec": "istanbul cover _mocha -- --ui tdd --check-leaks",
     "spec-w": "mocha --ui tdd --check-leaks --watch --growl --reporter nyan",
     "test": "npm run lint && istanbul cover _mocha --report lcovonly -- --ui tdd --check-leaks"
@@ -25,7 +25,9 @@
     "babel-cli": "^6.18.0",
     "babel-preset-latest": "^6.16.0",
     "chai": "^4.0.2",
+    "commitizen": "^2.9.6",
     "coveralls": "^2.11.15",
+    "cz-conventional-changelog": "^2.0.0",
     "eslint": "^4.1.1",
     "eslint-config-google": "^0.7.1",
     "istanbul": "^0.4.5",
@@ -35,5 +37,10 @@
     "sinon": "^2.0.0",
     "sinon-chai": "^2.8.0"
   },
-  "dependencies": {}
+  "dependencies": {},
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
+  }
 }

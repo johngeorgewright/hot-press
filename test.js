@@ -2,7 +2,7 @@
 /* eslint max-len:off, require-jsdoc:off */
 
 const chai = require('chai');
-const HP = require('./hot-press.src.js');
+const HP = require('./hot-press.src.js')();
 const {
   after, all, before, call, dereg, deregAll, emit, off, on, once, onceAfter,
   onceBefore, reg, triggers, triggersAfter, triggersBefore, triggersOnce,
