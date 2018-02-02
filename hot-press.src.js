@@ -46,9 +46,7 @@ const DEFAULT_TIMEOUT = 300
  * @param {Any[]} arr - The array to flatten
  * @return {Any[]} The flattened array
  */
-function flatten (arr) {
-  return arr.reduce((a, b) => a.concat(b), [])
-}
+const flatten = arr => arr.reduce((a, b) => a.concat(b), [])
 
 /**
  * Transforms the 1st character of a string to uppercase.
@@ -56,9 +54,7 @@ function flatten (arr) {
  * @param {String} str - The string to manipulate.
  * @return {String} The transformed string.
  */
-function upperFirst (str) {
-  return str.charAt(0).toUpperCase() + str.slice(1)
-}
+const upperFirst = str => str.charAt(0).toUpperCase() + str.slice(1)
 
 /**
  * @return {HotPress}
@@ -75,7 +71,7 @@ function init () {
    * @type {Object}
    * @private
    */
-  let listeners = {}
+  const listeners = {}
 
   /**
    * Procedures referenced by the name.
@@ -83,14 +79,14 @@ function init () {
    * @type {Object}
    * @private
    */
-  let procedures = {}
+  const procedures = {}
 
   /**
    * Namespaced HotPress instances.
    * @type {Object.<string, Function>}
    * @private
    */
-  let namespaces = {}
+  const namespaces = {}
 
   /**
    * Returns all the listeners for a given message. The returned value will be
@@ -116,11 +112,10 @@ function init () {
    * @param {String} message - The event name/message
    * @return {Function[]} An ordered array of listeners
    */
-  function getAllListenersFor (message) {
-    return Object
+  const getAllListenersFor = message =>
+    Object
       .keys(listeners[message] || {})
       .reduce((acc, part) => acc.concat(listeners[message][part]), [])
-  }
 
   /**
    * Returns a list of messages that should be called in order for a specific
@@ -132,11 +127,11 @@ function init () {
    * @param {String} message - The event name/message
    * @return {String[]} The ordered list of messages that should be called
    */
-  function getHierarchy (message) {
-    let parts = message.split(HIERARCHY_SEPARATOR)
-    let hierarchy = [WILDCARD]
+  const getHierarchy = message => {
+    const parts = message.split(HIERARCHY_SEPARATOR)
+    const hierarchy = [WILDCARD]
     parts.reduce((message, part) => {
-      let prefix = message + HIERARCHY_SEPARATOR
+      const prefix = message + HIERARCHY_SEPARATOR
       hierarchy.unshift(prefix + WILDCARD)
       return prefix + part
     })
@@ -151,9 +146,8 @@ function init () {
    * @param {String} prefix - The prefix to prepend
    * @return {String} The transformed string
    */
-  function prependHierarchy (name, prefix) {
-    return prefix ? `${prefix}.${name}` : name
-  }
+  const prependHierarchy = (name, prefix) =>
+    prefix ? `${prefix}.${name}` : name
 
   /**
    * Removes a given namespace prefixed on a string.
@@ -162,11 +156,10 @@ function init () {
    * @param  {String} prefix The prefix to remove
    * @return {String}        The transformed string
    */
-  function removePrefix (name, prefix) {
-    return prefix
+  const removePrefix = (name, prefix) =>
+    prefix
       ? name.substr(prefix.length + HIERARCHY_SEPARATOR.length)
       : name
-  }
 
   /**
    * Adds a listener to a specific part of an event's lifecycle.
@@ -192,7 +185,7 @@ function init () {
    * @this HotPress
    */
   function oncePart (subscribe, message, fn) {
-    let subscriber = (...args) => {
+    const subscriber = (...args) => {
       this.off(message, subscriber)
       return fn(...args)
     }
@@ -205,12 +198,11 @@ function init () {
    * @param {Number} timeout Timeout in milliseconds
    * @return {Promise} A promise that will be rejected within the given time
    */
-  function errorAfterMS (timeout) {
-    return new Promise((resolve, reject) => setTimeout(
+  const errorAfterMS = timeout =>
+    new Promise((resolve, reject) => setTimeout(
       () => reject(new HotPressTimeoutError(timeout)),
       timeout
     ))
-  }
 
   /**
    * Subscribes emittion of an array of events to another event. All data will
@@ -269,7 +261,7 @@ function init () {
    * completed
    */
   function emit (message, data) {
-    let emit = createEmitter.call(this, message, data)
+    const emit = createEmitter.call(this, message, data)
     return this.lifecycle.reduce((promise, method) => (
       promise.then(() => emit(method))
     ), Promise.resolve())
@@ -281,10 +273,13 @@ function init () {
    * @param {Any[]} arr The array to search
    * @return {Any[]} An array of duplicates
    */
-  function findDuplicates (arr) {
-    let dupCounts = arr.reduce((dupCounts, item) => Object.assign(dupCounts, {
-      [item]: (dupCounts[item] || 0) + 1
-    }), {})
+  const findDuplicates = arr => {
+    const dupCounts = arr.reduce(
+      (dupCounts, item) => Object.assign(dupCounts, {
+        [item]: (dupCounts[item] || 0) + 1
+      }),
+      {}
+    )
     return Object.keys(dupCounts).filter(it => dupCounts[it] > 1)
   }
 
@@ -297,11 +292,11 @@ function init () {
    * @return {Number} The amount of listeners removed
    */
   function removeListener (message, fn) {
-    let listeners = getListenersFor.call(this, message)
+    const listeners = getListenersFor.call(this, message)
     let removed = 0
-    for (let key in listeners) {
-      let set = listeners[key]
-      let index = set.indexOf(fn)
+    for (const key in listeners) {
+      const set = listeners[key]
+      const index = set.indexOf(fn)
       if (index !== -1) {
         set[index]._hpRemoved = true
         set.splice(index, 1)
@@ -318,9 +313,9 @@ function init () {
    * @param {String} message The event name/message
    * @return {Number} The amount of removed listeners
    */
-  function removeAllListeners (message) {
-    let all = getAllListenersFor(message)
-    let amount = all ? all.length : 0
+  const removeAllListeners = message => {
+    const all = getAllListenersFor(message)
+    const amount = all ? all.length : 0
     all.forEach(listener => {
       listener._hpRemoved = true
     })
@@ -334,9 +329,8 @@ function init () {
    * @param {String} method  The method name
    * @return {String}        The singular method name
    */
-  function singularMethodName (method) {
-    return method === ON ? 'once' : `once${upperFirst(method)}`
-  }
+  const singularMethodName = method =>
+    method === ON ? 'once' : `once${upperFirst(method)}`
 
   /**
    * Returns a method name we may use as the trigger listener.
@@ -344,9 +338,8 @@ function init () {
    * @param {String} method  The method name
    * @return {String}        The trigger method name
    */
-  function triggerMethodName (method) {
-    return method === ON ? 'triggers' : `triggers${upperFirst(method)}`
-  }
+  const triggerMethodName = method =>
+    method === ON ? 'triggers' : `triggers${upperFirst(method)}`
 
   /**
    * Fetches all the parts of the lifecycle before "on"
@@ -427,8 +420,8 @@ function init () {
      * @param {String[]} lifecycle The lifecycle list
      */
     set lifecycle (lifecycle) {
-      let {_lifecycle} = this
-      let duplicates = findDuplicates(lifecycle)
+      const {_lifecycle} = this
+      const duplicates = findDuplicates(lifecycle)
       this._lifecycle = lifecycle
 
       if (duplicates.length) {
@@ -444,9 +437,9 @@ function init () {
       })
 
       lifecycle.forEach(method => {
-        let singularName = singularMethodName(method)
-        let triggersName = triggerMethodName(method)
-        let singularTriggersName = triggerMethodName(singularName)
+        const singularName = singularMethodName(method)
+        const triggersName = triggerMethodName(method)
+        const singularTriggersName = triggerMethodName(singularName)
 
         this[method] = onPart.bind(this, method)
         this[singularName] = oncePart.bind(this, this[method])
@@ -476,7 +469,7 @@ function init () {
     all (messages, fn) {
       let toDo
       let dataCollection
-      let size = Object
+      const size = Object
         .keys(messages)
         .reduce((size, part) => size + messages[part].length, 0)
 
@@ -541,7 +534,7 @@ function init () {
      * @return {HotPress}       A new version of HotPRess
      */
     ns (name) {
-      let fullName = prependHierarchy(name, this.prefix)
+      const fullName = prependHierarchy(name, this.prefix)
       if (namespaces[fullName]) return namespaces[fullName]
       return name.split(HIERARCHY_SEPARATOR).reduce((parent, name) => {
         name = prependHierarchy(name, parent.prefix)
