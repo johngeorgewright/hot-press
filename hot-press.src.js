@@ -99,9 +99,10 @@ function init () {
    */
   function getListenersFor (message) {
     if (!listeners[message]) {
-      listeners[message] = this.lifecycle.reduce((acc, method) => (
-        Object.assign(acc, {[method]: []})
-      ), {})
+      listeners[message] = this.lifecycle.reduce(
+        (acc, method) => Object.assign(acc, {[method]: []}),
+        {}
+      )
     }
     return listeners[message]
   }
@@ -262,9 +263,10 @@ function init () {
    */
   function emit (message, data) {
     const emit = createEmitter.call(this, message, data)
-    return this.lifecycle.reduce((promise, method) => (
-      promise.then(() => emit(method))
-    ), Promise.resolve())
+    return this.lifecycle.reduce(
+      (promise, method) => promise.then(() => emit(method)),
+      Promise.resolve()
+    )
   }
 
   /**
@@ -368,12 +370,15 @@ function init () {
    * @return {Object} The procedures as name => fn
    */
   function getProcedures () {
-    return Object.keys(procedures).reduce((acc, name) => {
-      if (name.startsWith(this.prefix)) {
-        acc[removePrefix(name)] = procedures[name]
-      }
-      return acc
-    }, {})
+    return Object.keys(procedures).reduce(
+      (acc, name) => {
+        if (name.startsWith(this.prefix)) {
+          acc[removePrefix(name)] = procedures[name]
+        }
+        return acc
+      },
+      {}
+    )
   }
 
   /**
@@ -536,13 +541,16 @@ function init () {
     ns (name) {
       const fullName = prependHierarchy(name, this.prefix)
       if (namespaces[fullName]) return namespaces[fullName]
-      return name.split(HIERARCHY_SEPARATOR).reduce((parent, name) => {
-        name = prependHierarchy(name, parent.prefix)
-        namespaces[name] = namespaces[name] || new HotPress(
-          name, parent.lifecycle, parent.timeout
-        )
-        return namespaces[name]
-      }, this)
+      return name.split(HIERARCHY_SEPARATOR).reduce(
+        (parent, name) => {
+          name = prependHierarchy(name, parent.prefix)
+          namespaces[name] = namespaces[name] || new HotPress(
+            name, parent.lifecycle, parent.timeout
+          )
+          return namespaces[name]
+        },
+        this
+      )
     }
 
     /**
@@ -590,25 +598,22 @@ function init () {
      * @return {Promise}     A promise resolved once the procedure has finished.
      */
     call (name, ...data) {
+      let result
+
       name = prependHierarchy(name, this.prefix)
 
       const emit = createEmitter.call(this, name, data)
 
-      let result
-
-      const lifecycleReducer = (promise, method) => (
+      const lifecycleReducer = (promise, method) =>
         promise.then(() => emit(method))
-      )
 
       const proc = procedures[name] || (() => {
         throw new HotPressNonExistingProcedureError(name)
       })
 
-      let promise = startOfLifecycle
+      const promise = startOfLifecycle
         .call(this)
         .reduce(lifecycleReducer, Promise.resolve())
-
-      promise = promise
         .then(() => Promise.all([
           !proc._hpRemoved && proc(...data),
           emit(ON)
