@@ -1,16 +1,18 @@
 /* eslint-env mocha */
 /* eslint-disable no-unused-expressions */
 
-const chai = require('chai')
-const HP = require('./hot-press.src.js')()
+import chai from 'chai'
+import HotPress from '../src/hot-press'
+import sinon from 'sinon'
+import sinonChai from 'sinon-chai'
+import functions from 'lodash.functions'
+
+const HP = new HotPress()
 const {
   after, all, before, call, dereg, deregAll, emit, off, on, once, onceAfter,
   onceBefore, reg, triggers, triggersAfter, triggersBefore, triggersOnce,
   triggersOnceAfter, triggersOnceBefore
 } = HP
-const sinon = require('sinon')
-const sinonChai = require('sinon-chai')
-const functions = require('lodash.functions')
 
 chai.use(sinonChai)
 chai.should()
