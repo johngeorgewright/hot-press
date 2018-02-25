@@ -27,7 +27,7 @@ function.
 ```javascript
 import HotPress from 'hot-press';
 
-const {emit, on} = HotPress();
+const {emit, on} = new new HotPress();
 on('event', (eventName, ...data) => console.log(...data));
 emit('event', 'some', 'variables');
 // 'some' 'variables'
@@ -41,7 +41,7 @@ have been emitted.
 ```javascript
 import HotPress from 'hot-press';
 
-const {all, emit} = HotPress();
+const {all, emit} = new HotPress();
 all({on: ['event1', 'event2']}, () => console.log('Triggered!'));
 emit('event1');
 emit('event2');
@@ -56,7 +56,7 @@ to all events under that hierarchy.
 ```javascript
 import HotPress from 'hot-press';
 
-const {emit, on} = HotPress();
+const {emit, on} = new HotPress();
 on('*', e => console.log(2, e));
 on('e.*', e => console.log(1, e));
 emit('e.f');
@@ -71,7 +71,7 @@ Remove all or specific subscribers from events using the `off()` function.
 ```javascript
 import HotPress from 'hot-press';
 
-const {emit, off, on} = HotPress();
+const {emit, off, on} = new HotPress();
 const fn = () => console.log('blah');
 
 on('event', fn);
@@ -107,7 +107,7 @@ function.
 ```javascript
 import HotPress from 'hot-press';
 
-const {after, before, emit, off, on} = HotPress();
+const {after, before, emit, off, on} = new HotPress();
 before('event', () => console.log(1));
 on('event', () => console.log(2));
 after('event', () => console.log(3));
@@ -142,7 +142,7 @@ the "after" part of the lifecycle has resolved.
 ```javascript
 import HotPress from 'hot-press';
 
-const {after, before, emit, on} = HotPress();
+const {after, before, emit, on} = new HotPress();
 before('event', eventuallyLog(1));
 on('event', eventuallyLog(2));
 after('event', eventuallyLog(3));
@@ -175,7 +175,7 @@ There is a configurable timeout for these asynchronous events. By default it's
 ```javascript
 import HotPress from 'hot-press';
 
-const emitter = HotPress();
+const emitter = new HotPress();
 emitter.timeout = 1000; // global
 emitter.ns('myNamespace').timeout = 600; // specific to a namespace
 ```
@@ -192,7 +192,7 @@ You can create a version of hot-press prefixing all messages with a namespace.
 import HotPress from 'hot-press';
 import {strictEqual} from 'assert';
 
-const {ns} = HotPress();
+const {ns} = new HotPress();
 const foo = ns('foo');
 
 foo.on('event', eventName => console.log(eventName));
@@ -206,7 +206,7 @@ Namespaces can be retrieved uses the dot syntax, or chained `ns()` calls.
 import HotPress from 'hot-press';
 import {strictEqual} from 'assert';
 
-const {ns} = HotPress();
+const {ns} = new HotPress();
 strictEqual(
   ns('nested').ns('namespaces'),
   ns('nested.namespaces'),
@@ -220,7 +220,7 @@ Namespaces also cascade their settings.
 import HotPress from 'hot-press';
 import {equal} from 'assert';
 
-const {ns} = HotPress();
+const {ns} = new HotPress();
 const foo = ns('foo');
 foo.timeout = 1000;
 
@@ -239,7 +239,7 @@ error events:
 ```javascript
 import HotPress from 'hot-press';
 
-const {emit, on} = HotPress();
+const {emit, on} = new HotPress();
 on('error.event', error => console.log(error.message));
 on('event', () => throw new Error('Something went wrong'));
 emit('event');
@@ -272,7 +272,7 @@ The `call()` function always returns a promise.
 import User from '../lib/user';
 import HotPress from 'hot-press';
 
-const {reg, call, on} = HotPress();
+const {reg, call, on} = new HotPress();
 
 reg('users.get', query => User.all(query));
 
@@ -295,7 +295,7 @@ Luckily enough, for those people, the lifecycle is configurable.
 ```javascript
 import HotPress from 'hot-press';
 
-const emitter = HotPress();
+const emitter = new HotPress();
 emitter.lifecycle = ['foo', 'bar', 'on', 'after'];
 const {foo, bar, on, after, emit} = emitter;
 
@@ -316,7 +316,7 @@ The lifecycle is configurable per namespace too.
 ```javascript
 import HotPress from 'hot-press';
 
-const {ns} = HotPress();
+const {ns} = new HotPress();
 const foo = ns('foo');
 foo.lifecycle = ['prior', 'on', 'end'];
 
