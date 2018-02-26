@@ -237,7 +237,7 @@ export default class HotPress {
   [$getListenersFor] (message) {
     if (!this[$listeners][message]) {
       this[$listeners][message] = this.lifecycle.reduce(
-        (acc, method) => Object.assign(acc, {[method]: []}),
+        (acc, method) => ({...acc, [method]: []}),
         {}
       )
     }
@@ -253,7 +253,7 @@ export default class HotPress {
   [$getAllListenersFor] (message) {
     return Object
       .keys(this[$listeners][message] || {})
-      .reduce((acc, part) => acc.concat(this[$listeners][message][part]), [])
+      .reduce((acc, part) => [...acc, ...this[$listeners][message][part]], [])
   }
 
   /**
