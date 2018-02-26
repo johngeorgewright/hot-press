@@ -1,5 +1,6 @@
 coverage
-hot-press.js
+dist
 *.log
 node_modules
+.nyc_output
 out

@@ -4,15 +4,15 @@
   "description": "Event lifecycle management",
   "main": "hot-press.js",
   "scripts": {
-    "build": "babel hot-press.src.js --out-file hot-press.js",
-    "build-w": "nodemon -i hot-press.js -x 'npm run spec && npm run build'",
+    "build": "rollup -c",
+    "build-w": "npm run build -- -w",
     "cover": "cat ./coverage/lcov.info | coveralls && rm -rf ./coverage",
     "lint": "eslint hot-press.src.js test.js",
     "lint-w": "nodemon -x 'npm run lint' -w hot-press.src.js -w test.js",
     "prepare": "npm test && npm run build",
-    "spec": "istanbul cover _mocha -- --ui tdd --check-leaks",
-    "spec-w": "mocha --ui tdd --check-leaks --watch --growl --reporter nyan",
-    "test": "npm run lint && istanbul cover _mocha --report lcovonly -- --ui tdd --check-leaks"
+    "spec": "cross-env NODE_ENV=test nyc --reporter=lcov mocha --ui tdd --check-leaks --require babel-register",
+    "spec-w": "mocha --ui tdd --check-leaks --watch --growl --reporter nyan --require babel-register",
+    "test": "npm run lint && cross-env NODE_ENV=test nyc --reporter=lcovonly --reporter=text mocha --ui tdd --check-leaks --require babel-register"
   },
   "keywords": [
     "event",
@@ -23,11 +23,15 @@
   "license": "MIT",
   "devDependencies": {
     "babel-cli": "^6.18.0",
+    "babel-plugin-external-helpers": "^6.22.0",
+    "babel-plugin-istanbul": "^4.1.5",
     "babel-preset-env": "^1.6.1",
     "babel-preset-stage-3": "^6.24.1",
+    "babel-register": "^6.26.0",
     "chai": "^4.0.2",
     "commitizen": "^2.9.6",
     "coveralls": "^3.0.0",
+    "cross-env": "^5.1.3",
     "cz-conventional-changelog": "^2.0.0",
     "eslint": "^4.4.1",
     "eslint-config-standard": "^11.0.0",
@@ -35,10 +39,13 @@
     "eslint-plugin-node": "^6.0.0",
     "eslint-plugin-promise": "^3.5.0",
     "eslint-plugin-standard": "^3.0.1",
-    "istanbul": "^0.4.5",
     "lodash.functions": "^4.3.0",
     "mocha": "^5.0.0",
     "mocha-lcov-reporter": "^1.2.0",
+    "nyc": "^11.4.1",
+    "rollup": "^0.56.2",
+    "rollup-plugin-babel": "^3.0.3",
+    "rollup-plugin-node-resolve": "^3.0.3",
     "sinon": "^4.0.0",
     "sinon-chai": "^2.12.0"
   },
@@ -47,5 +54,9 @@
     "commitizen": {
       "path": "./node_modules/cz-conventional-changelog"
     }
+  },
+  "nyc": {
+    "sourceMap": false,
+    "instrument": false
   }
 }
