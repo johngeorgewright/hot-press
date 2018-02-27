@@ -106,6 +106,7 @@ const singularMethodName = method =>
 const triggerMethodName = method =>
   method === ON ? 'triggers' : `triggers${upperFirst(method)}`
 
+const $lifecycle = Symbol('lifecycle')
 const $listeners = Symbol('listeners')
 const $procedures = Symbol('procedures')
 const $namespaces = Symbol('namespaces')
@@ -172,7 +173,7 @@ export default class HotPress {
     this[$namespaces] = namespaces
 
     this.prefix = prefix
-    this._lifecycle = []
+    this[$lifecycle] = []
     this.lifecycle = lifecycle
     this.timeout = timeout
     this.all = this.all.bind(this)
@@ -189,7 +190,7 @@ export default class HotPress {
    * @prop {String[]} lifecycle The lifecycle list
    */
   get lifecycle () {
-    return this._lifecycle.slice()
+    return this[$lifecycle].slice()
   }
 
   /**
@@ -197,9 +198,9 @@ export default class HotPress {
    * @param {String[]} lifecycle The lifecycle list
    */
   set lifecycle (lifecycle) {
-    const {_lifecycle} = this
+    const _lifecycle = this[$lifecycle]
     const duplicates = findDuplicates(lifecycle)
-    this._lifecycle = lifecycle
+    this[$lifecycle] = lifecycle
 
     if (duplicates.length) {
       throw new Error(`Lifecycle contains duplicates (${duplicates})`)
