@@ -1,6 +1,6 @@
 {
   "events": {
-    "crash": "growl -t 'Hot Press' 'An error occured'",
-    "exit": "growl -t 'Hot Press' 'Built successfully'"
+    "crash": "growlnotify -t 'Hot Press' 'An error occured'",
+    "exit": "growlnotify -t 'Hot Press' 'Built successfully'"
   }
 }
