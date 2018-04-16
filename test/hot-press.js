@@ -7,25 +7,18 @@ import sinon from 'sinon'
 import sinonChai from 'sinon-chai'
 import functions from 'lodash.functions'
 
-const HP = new HotPress()
-const {
-  after, all, before, call, dereg, deregAll, emit, off, on, once, onceAfter,
-  onceBefore, reg, triggers, triggersAfter, triggersBefore, triggersOnce,
-  triggersOnceAfter, triggersOnceBefore
-} = HP
-
 chai.use(sinonChai)
 chai.should()
 
-teardown(() => {
-  off('e')
-  off('e1')
-  off('e2')
+let broker
+
+setup(() => {
+  broker = new HotPress()
 })
 
 suite('emit()', () => {
   test('it returns a promise', () => {
-    emit('e').should.be.instanceof(Promise)
+    broker.emit('e').should.be.instanceof(Promise)
   })
 
   test('it resolves once all subscribers have resolved', () => {
@@ -34,60 +27,60 @@ suite('emit()', () => {
       spy()
       resolve()
     })
-    on('e', resolve)
-    before('e', resolve)
-    after('e', resolve)
-    return emit('e').then(() => spy.should.have.been.calledThrice)
+    broker.on('e', resolve)
+    broker.before('e', resolve)
+    broker.after('e', resolve)
+    return broker.emit('e').then(() => spy.should.have.been.calledThrice)
   })
 })
 
 suite('on()', () => {
   test('subscribes to events', () => {
     let spy = sinon.spy()
-    on('e', spy)
-    return emit('e').then(() => spy.should.have.been.calledOnce)
+    broker.on('e', spy)
+    return broker.emit('e').then(() => spy.should.have.been.calledOnce)
   })
 
   test('gives the message name and any data', () => {
-    on('e', (message, ...data) => {
+    broker.on('e', (message, ...data) => {
       message.should.equal('e')
       data.should.eql([{mung: 'face'}, {some: 'thing'}])
     })
-    return emit('e', {mung: 'face'}, {some: 'thing'})
+    return broker.emit('e', {mung: 'face'}, {some: 'thing'})
   })
 
   test('wildcards', () => {
     let spy = sinon.spy()
-    on('*', spy)
-    return emit('e')
+    broker.on('*', spy)
+    return broker.emit('e')
       .then(() => spy.should.have.been.calledWith('e'))
-      .then(() => emit('f'))
+      .then(() => broker.emit('f'))
       .then(() => spy.should.have.been.calledWith('f'))
-      .then(() => off('*'))
+      .then(() => broker.off('*'))
   })
 
   test('wildcards in hierarchy', () => {
     let spy = sinon.spy()
-    on('e.*', spy)
-    return emit('e.f')
+    broker.on('e.*', spy)
+    return broker.emit('e.f')
       .then(() => spy.should.have.been.calledWith('e.f'))
-      .then(() => emit('e.f.g'))
+      .then(() => broker.emit('e.f.g'))
       .then(() => spy.should.have.been.calledWith('e.f.g'))
-      .then(() => off('e.*'))
+      .then(() => broker.off('e.*'))
   })
 
   test('error handling', () => {
     let spy = sinon.spy()
     let error = new Error('should be swallowed')
-    on('e', () => {
+    broker.on('e', () => {
       throw error
     })
-    on('error.e', spy)
-    return HP
+    broker.on('error.e', spy)
+    return broker
       .emit('e')
       .then(() => spy.should.have.been.calledOnce)
       .then(() => spy.should.have.been.calledWithExactly('error.e', error))
-      .then(() => off('error.e'))
+      .then(() => broker.off('error.e'))
   })
 })
 
@@ -96,33 +89,37 @@ suite('all()', () => {
 
   setup(() => {
     spy = sinon.spy()
-    all({before: ['e4'], on: ['e', 'e1', 'e2'], after: ['e3']}, spy)
+    broker.all({before: ['e4'], on: ['e', 'e1', 'e2'], after: ['e3']}, spy)
   })
 
-  teardown(() => Promise.all([
-    off('e1'),
-    off('e2'),
-    off('e3'),
-    off('e4')
-  ]))
+  teardown(() => {
+    broker.off('e1')
+    broker.off('e2')
+    broker.off('e3')
+    broker.off('e4')
+  })
 
-  test('is called once all events have been published', () => (
-    emit('e')
-      .then(() => emit('e1'))
-      .then(() => emit('e1'))
-      .then(() => emit('e2'))
-      .then(() => emit('e3'))
-      .then(() => emit('e4'))
+  test('is called once all events have been published', () =>
+    broker.emit('e')
+      .then(() => broker.emit('e1'))
+      .then(() => spy.should.not.have.been.called)
+      .then(() => broker.emit('e1'))
+      .then(() => spy.should.not.have.been.called)
+      .then(() => broker.emit('e2'))
+      .then(() => spy.should.not.have.been.called)
+      .then(() => broker.emit('e3'))
+      .then(() => spy.should.not.have.been.called)
+      .then(() => broker.emit('e4'))
       .then(() => spy.should.have.been.calledOnce)
-  ))
+  )
 
-  test('that the data and event names have been passed to the subscriber', () => (
+  test('that the data and event names have been passed to the subscriber', () =>
     Promise.all([
-      emit('e', 1, 2),
-      emit('e1', 3, 4),
-      emit('e2', 5, 6, 7),
-      emit('e3', 8),
-      emit('e4', 9, 10)
+      broker.emit('e', 1, 2),
+      broker.emit('e1', 3, 4),
+      broker.emit('e2', 5, 6, 7),
+      broker.emit('e3', 8),
+      broker.emit('e4', 9, 10)
     ]).then(() => {
       spy.should.have.been.calledWith({
         e: [1, 2],
@@ -132,7 +129,7 @@ suite('all()', () => {
         e4: [9, 10]
       })
     })
-  ))
+  )
 })
 
 suite('off()', () => {
@@ -142,35 +139,35 @@ suite('off()', () => {
   setup(() => {
     spyA = sinon.spy()
     spyB = sinon.spy()
-    on('e', spyA)
-    on('e', spyB)
+    broker.on('e', spyA)
+    broker.on('e', spyB)
   })
 
   test('unsubscribes a specific listener', () => {
-    off('e', spyA)
-    return emit('e').then(() => {
+    broker.off('e', spyA)
+    return broker.emit('e').then(() => {
       spyA.should.not.have.been.called
       spyB.should.have.been.calledOnce
     })
   })
 
   test('unsubscribes all listeners', () => {
-    off('e')
-    return emit('e').then(() => {
+    broker.off('e')
+    return broker.emit('e').then(() => {
       spyA.should.not.have.been.called
       spyB.should.not.have.been.called
     })
   })
 
   test('returns the amount listeners removed', () => {
-    off('e').should.equal(2)
-    off('e').should.equal(0)
+    broker.off('e').should.equal(2)
+    broker.off('e').should.equal(0)
   })
 
   test('we can add the same listener back again', () => {
-    off('e')
-    on('e', spyA)
-    return emit('e').then(() => {
+    broker.off('e')
+    broker.on('e', spyA)
+    return broker.emit('e').then(() => {
       spyA.should.have.been.calledOnce
     })
   })
@@ -179,72 +176,72 @@ suite('off()', () => {
 suite('once()', () => {
   test('it subscribes only to the first event', () => {
     let spy = sinon.spy()
-    once('e', spy)
-    return Promise.all([emit('e'), emit('e')])
+    broker.once('e', spy)
+    return Promise.all([broker.emit('e'), broker.emit('e')])
       .then(() => spy.should.have.been.calledOnce)
   })
 })
 
 suite('before()', () => {
-  test('subscribes to events before they\'re properly published', testBeforeSubscriptions(before))
+  test('subscribes to events before they\'re properly published', testBeforeSubscriptions('before'))
 
-  test('pauses other events', testBeforePause(before))
+  test('pauses other events', testBeforePause('before'))
 
-  test('timeouts for long processes', testBeforeTimeout(before))
+  test('timeouts for long processes', testBeforeTimeout('before'))
 
   test('many subscribers', () => {
     let spy = sinon.spy()
-    before('e', spy)
-    before('e', spy)
-    return emit('e').then(() => spy.should.have.been.calledTwice)
+    broker.before('e', spy)
+    broker.before('e', spy)
+    return broker.emit('e').then(() => spy.should.have.been.calledTwice)
   })
 })
 
 suite('onceBefore()', () => {
-  test('subscribes to events before they\'re properly published', testBeforeSubscriptions(onceBefore))
+  test('subscribes to events before they\'re properly published', testBeforeSubscriptions('onceBefore'))
 
-  test('pauses other events', testBeforePause(onceBefore))
+  test('pauses other events', testBeforePause('onceBefore'))
 
   test('it will only subscribe to the first event', () => {
     let spy = sinon.spy()
-    onceBefore('e', spy)
+    broker.onceBefore('e', spy)
     return Promise
-      .all([emit('e'), emit('e')])
+      .all([broker.emit('e'), broker.emit('e')])
       .then(() => spy.should.have.been.calledOnce)
   })
 })
 
 suite('after()', () => {
-  test('subscribes to events after they\'re published', testAfterSubscriptions(after))
+  test('subscribes to events after they\'re published', testAfterSubscriptions('after'))
 })
 
 suite('onceAfter()', () => {
-  test('subscribes to events after they\'re published', testAfterSubscriptions(onceAfter))
+  test('subscribes to events after they\'re published', testAfterSubscriptions('onceAfter'))
 
   test('subscribes only to the first event', () => {
     let spy = sinon.spy()
-    onceAfter('e', spy)
+    broker.onceAfter('e', spy)
     return Promise
-      .all([emit('e'), emit('e')])
+      .all([broker.emit('e'), broker.emit('e')])
       .then(() => spy.should.have.been.calledOnce)
   })
 })
 
 suite('triggers()', () => {
   teardown(() => {
-    off('e1')
-    off('e2')
+    broker.off('e1')
+    broker.off('e2')
   })
 
   test('the array of events are triggered by another event', () => {
     let spyA = sinon.spy()
     let spyB = sinon.spy()
-    on('e1', spyA)
-    on('e1', spyB)
-    on('e2', spyA)
-    on('e2', spyB)
-    triggers('e', ['e1', 'e2'])
-    return emit('e').then(() => {
+    broker.on('e1', spyA)
+    broker.on('e1', spyB)
+    broker.on('e2', spyA)
+    broker.on('e2', spyB)
+    broker.triggers('e', ['e1', 'e2'])
+    return broker.emit('e').then(() => {
       spyA.should.have.been.calledTwice
       spyB.should.have.been.calledTwice
     })
@@ -252,9 +249,9 @@ suite('triggers()', () => {
 
   test('the data is passed from the trigger to the tiggered', () => {
     let spy = sinon.spy()
-    on('e1', spy)
-    triggers('e', ['e1'])
-    return emit('e', 'foo', 'bar').then(() => {
+    broker.on('e1', spy)
+    broker.triggers('e', ['e1'])
+    return broker.emit('e', 'foo', 'bar').then(() => {
       spy.should.have.been.calledWith('e1', 'foo', 'bar')
     })
   })
@@ -262,64 +259,64 @@ suite('triggers()', () => {
 
 suite('triggersAfter()', () => {
   test('it subscribes to after the event life cycle', testAfterSubscriptions((message, spy) => {
-    on('e1', spy)
-    triggersAfter(message, ['e1'])
+    broker.on('e1', spy)
+    broker.triggersAfter(message, ['e1'])
   }))
 })
 
 suite('triggersBefore()', () => {
   test('it subscribes to the beginning of the event life cycle', testBeforeSubscriptions((message, spy) => {
-    on('e1', spy)
-    triggersBefore(message, ['e1'])
+    broker.on('e1', spy)
+    broker.triggersBefore(message, ['e1'])
   }))
 
   test('it can pause the next part of the event life cycle', testBeforePause((message, wait) => {
-    on('e1', wait)
-    triggersBefore(message, ['e1'])
+    broker.on('e1', wait)
+    broker.triggersBefore(message, ['e1'])
   }))
 })
 
 suite('triggersOnce()', () => {
   test('it subscribes only to the first event', () => {
     let spy = sinon.spy()
-    on('e1', spy)
-    triggersOnce('e', ['e1'])
-    return Promise.all([emit('e'), emit('e')])
+    broker.on('e1', spy)
+    broker.triggersOnce('e', ['e1'])
+    return Promise.all([broker.emit('e'), broker.emit('e')])
       .then(() => spy.should.have.been.calledOnce)
   })
 })
 
 suite('triggersOnceBefore()', () => {
   test('it subscribes to the beginning of the event life cycle', testBeforeSubscriptions((message, spy) => {
-    on('e1', spy)
-    triggersOnceBefore(message, ['e1'])
+    broker.on('e1', spy)
+    broker.triggersOnceBefore(message, ['e1'])
   }))
 
   test('it can pause the next part of the event life cycle', testBeforePause((message, wait) => {
-    on('e1', wait)
-    triggersOnceBefore(message, ['e1'])
+    broker.on('e1', wait)
+    broker.triggersOnceBefore(message, ['e1'])
   }))
 
   test('it subscribes only to the first event', () => {
     let spy = sinon.spy()
-    on('e1', spy)
-    triggersOnceBefore('e', ['e1'])
-    return Promise.all([emit('e'), emit('e')])
+    broker.on('e1', spy)
+    broker.triggersOnceBefore('e', ['e1'])
+    return Promise.all([broker.emit('e'), broker.emit('e')])
       .then(() => spy.should.have.been.calledOnce)
   })
 })
 
 suite('triggersOnceAfter()', () => {
   test('it subscribes to after the event life cycle', testAfterSubscriptions((message, spy) => {
-    on('e1', spy)
-    triggersOnceAfter(message, ['e1'])
+    broker.on('e1', spy)
+    broker.triggersOnceAfter(message, ['e1'])
   }))
 
   test('it subscribes only to the first event', () => {
     let spy = sinon.spy()
-    on('e1', spy)
-    triggersOnceAfter('e', ['e1'])
-    return Promise.all([emit('e'), emit('e')])
+    broker.on('e1', spy)
+    broker.triggersOnceAfter('e', ['e1'])
+    return Promise.all([broker.emit('e'), broker.emit('e')])
       .then(() => spy.should.have.been.calledOnce)
   })
 })
@@ -330,19 +327,19 @@ suite('ns()', () => {
 
   setup(() => {
     spy = sinon.spy()
-    foo = HP.ns('foo')
+    foo = broker.ns('foo')
   })
 
   test('it returns an object with all required methods', () => {
     foo.should.be.an('object')
-    functions(HP)
+    functions(broker)
       .filter(fn => !/HotPress[a-zA-Z]*Error/.test(fn))
       .forEach(name => foo.should.respondTo(name))
   })
 
   test('it decorates the `on` method with your namespace', () => {
     foo.on('bar', spy)
-    return HP
+    return broker
       .emit('foo.bar')
       .then(() => foo.emit('bar'))
       .then(() => spy.should.have.been.calledTwice)
@@ -351,14 +348,14 @@ suite('ns()', () => {
   test('it decorates trigger methods', () => {
     foo.on('bar', spy)
     foo.triggers('boo', ['bar'])
-    return HP
+    return broker
       .emit('foo.boo')
       .then(() => spy.should.have.been.calledOnce)
   })
 
   test('it is basically a singleton factory', () => {
-    foo.should.equal(HP.ns('foo'), 'Objects are not exactly the same')
-    foo.ns('bar').should.equal(HP.ns('foo.bar'))
+    foo.should.equal(broker.ns('foo'), 'Objects are not exactly the same')
+    foo.ns('bar').should.equal(broker.ns('foo.bar'))
   })
 
   test('properties cascade on creation of a new namespace', () => {
@@ -372,15 +369,11 @@ suite('ns()', () => {
 
 suite('reg()', () => {
   setup(() => {
-    reg('proc', () => {})
-  })
-
-  teardown(() => {
-    dereg('proc')
+    broker.reg('proc', () => {})
   })
 
   test('it will only allow one procedure per name', () => {
-    let incorrect = () => reg('proc', () => {})
+    let incorrect = () => broker.reg('proc', () => {})
     incorrect.should.throw('The procedure "proc" is already registered')
   })
 })
@@ -390,19 +383,19 @@ suite('dereg()', () => {
 
   setup(() => {
     spy = sinon.spy()
-    reg('procedure', spy)
+    broker.reg('procedure', spy)
   })
 
   test('the process is unregistered', () => {
-    dereg('procedure')
-    return call('procedure').catch(error => {
+    broker.dereg('procedure')
+    return broker.call('procedure').catch(error => {
       error.message.should.equal('The procedure "procedure" doesn\'t exist')
     })
   })
 
   test('the return value represents the amount of processes removed', () => {
-    dereg('procedure').should.equal(1)
-    dereg('foo').should.equal(0)
+    broker.dereg('procedure').should.equal(1)
+    broker.dereg('foo').should.equal(0)
   })
 })
 
@@ -411,21 +404,21 @@ suite('deregAll()', () => {
 
   setup(() => {
     spy = sinon.spy()
-    reg('procedure1', spy)
-    reg('procedure2', spy)
+    broker.reg('procedure1', spy)
+    broker.reg('procedure2', spy)
   })
 
   test('it will remove all registered procedures', () => {
-    deregAll()
-    return call('procedure1')
+    broker.deregAll()
+    return broker.call('procedure1')
       .catch(() => {})
-      .then(() => call('procedure2'))
+      .then(() => broker.call('procedure2'))
       .catch(() => {})
       .then(() => spy.should.not.have.been.called)
   })
 
   test('returns the amount of procedures removed', () => {
-    deregAll().should.equal(2)
+    broker.deregAll().should.equal(2)
   })
 })
 
@@ -434,35 +427,35 @@ suite('call()', () => {
 
   setup(() => {
     spy = sinon.stub().returns('YAY')
-    reg('proc', spy)
+    broker.reg('proc', spy)
   })
 
   teardown(() => {
-    dereg('proc')
-    off('proc')
+    broker.dereg('proc')
+    broker.off('proc')
   })
 
   test('returns a Promise', () => {
-    call('proc').should.be.instanceOf(Promise)
+    broker.call('proc').should.be.instanceOf(Promise)
   })
 
   test('the process is called', () => {
     let data = ['i', 'am', 'data']
-    return call('proc', data).then(() => {
+    return broker.call('proc', data).then(() => {
       spy.should.have.been.calledOnce
       spy.should.have.been.calledWithExactly(data)
     })
   })
 
   test('the result is given back', () => {
-    return call('proc').then(data => data.should.equal('YAY'))
+    return broker.call('proc').then(data => data.should.equal('YAY'))
   })
 
   test('an event lifecycle is triggered', done => {
-    before('proc', spy)
-    on('proc', spy)
-    after('proc', result => done())
-    call('proc').then(() => spy.callCount.should.equal(3))
+    broker.before('proc', spy)
+    broker.on('proc', spy)
+    broker.after('proc', result => done())
+    broker.call('proc').then(() => spy.callCount.should.equal(3))
   })
 })
 
@@ -470,32 +463,32 @@ suite('custom lifecycles', () => {
   let prevLifecycle
 
   setup(() => {
-    prevLifecycle = HP.lifecycle
+    prevLifecycle = broker.lifecycle
   })
 
   teardown(() => {
-    HP.lifecycle = prevLifecycle
+    broker.lifecycle = prevLifecycle
   })
 
   test('methods are added', () => {
-    HP.lifecycle = ['foo', 'bar', 'on', 'zob']
-    HP.should.not.respondTo('before')
-    HP.should.not.respondTo('after')
-    HP.should.respondTo('foo')
-    HP.should.respondTo('bar')
-    HP.should.respondTo('zob')
+    broker.lifecycle = ['foo', 'bar', 'on', 'zob']
+    broker.should.not.respondTo('before')
+    broker.should.not.respondTo('after')
+    broker.should.respondTo('foo')
+    broker.should.respondTo('bar')
+    broker.should.respondTo('zob')
   })
 
   test('lifecycles can\'t contain duplicates', () => {
     (() => {
-      HP.lifecycle = ['foo', 'foo', 'on']
+      broker.lifecycle = ['foo', 'foo', 'on']
     })
       .should.throw('Lifecycle contains duplicates (foo)')
   })
 
   test('lifecycles must contain an "on" keywords', () => {
     (() => {
-      HP.lifecycle = ['foo', 'bar', 'zob']
+      broker.lifecycle = ['foo', 'bar', 'zob']
     })
       .should.throw('Lifecycle (foo,bar,zob) must contain an "on" method')
   })
@@ -503,10 +496,11 @@ suite('custom lifecycles', () => {
 
 function testBeforePause (method) {
   return done => {
+    method = typeof method === 'string' ? broker[method] : method
     let spy = sinon.spy()
-    on('e', spy)
+    broker.on('e', spy)
     method('e', () => new Promise(resolve => setTimeout(resolve, 100)))
-    emit('e')
+    broker.emit('e')
     setTimeout(() => spy.should.not.have.been.called, 90)
     setTimeout(() => {
       spy.should.have.been.calledOnce
@@ -517,38 +511,41 @@ function testBeforePause (method) {
 
 function testBeforeTimeout (method) {
   return () => {
+    method = typeof method === 'string' ? broker[method] : method
     let spyA = sinon.spy()
     let spyB = sinon.spy()
-    after('e', spyA)
-    on('error.e', spyB)
-    method('e', () => new Promise(resolve => setTimeout(resolve, HP.timeout + 5)))
-    return emit('e').then(() => {
+    broker.after('e', spyA)
+    broker.on('error.e', spyB)
+    method('e', () => new Promise(resolve => setTimeout(resolve, broker.timeout + 5)))
+    return broker.emit('e').then(() => {
       spyA.should.have.been.calledOnce
       spyB.should.have.been.calledOnce
       let error = spyB.firstCall.args[1]
       error.should.be.instanceOf(Error)
-      error.should.have.property('message', `Exceeded ${HP.timeout}ms`)
+      error.should.have.property('message', `Exceeded ${broker.timeout}ms`)
     })
   }
 }
 
 function testBeforeSubscriptions (method) {
   return () => {
+    method = typeof method === 'string' ? broker[method] : method
     let spyA = sinon.spy()
     let spyB = sinon.spy()
-    on('e', spyA)
+    broker.on('e', spyA)
     method('e', spyB)
-    return emit('e').then(() => spyB.should.have.been.calledBefore(spyA))
+    return broker.emit('e').then(() => spyB.should.have.been.calledBefore(spyA))
   }
 }
 
 function testAfterSubscriptions (method) {
   return () => {
+    method = typeof method === 'string' ? broker[method] : method
     let spyA = sinon.spy()
     let spyB = sinon.spy()
     method('e', spyA)
-    on('e', spyB)
-    return emit('e').then(() => {
+    broker.on('e', spyB)
+    return broker.emit('e').then(() => {
       spyA.should.have.been.calledOnce
       spyB.should.have.been.calledOnce
       spyA.should.have.been.calledAfter(spyB)
