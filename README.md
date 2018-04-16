@@ -27,7 +27,7 @@ function.
 ```javascript
 import HotPress from 'hot-press';
 
-const {emit, on} = new new HotPress();
+const {emit, on} = new HotPress();
 on('event', (eventName, ...data) => console.log(...data));
 emit('event', 'some', 'variables');
 // 'some' 'variables'
