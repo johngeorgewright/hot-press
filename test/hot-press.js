@@ -443,12 +443,6 @@ suite('call()', () => {
 })
 
 suite('custom lifecycles', () => {
-  let prevLifecycle
-
-  setup(() => {
-    prevLifecycle = broker.lifecycle
-  })
-
   test('methods are added', () => {
     broker.lifecycle = ['foo', 'bar', 'on', 'zob']
     broker.should.not.respondTo('before')
