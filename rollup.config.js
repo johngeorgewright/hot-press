@@ -4,7 +4,7 @@ import babel from 'rollup-plugin-babel'
 export default {
   input: 'src/hot-press.js',
   output: {
-    file: 'hot-press.js',
+    file: 'dist/hot-press.js',
     format: 'cjs'
   },
   plugins: [

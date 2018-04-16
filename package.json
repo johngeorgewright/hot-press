@@ -2,14 +2,14 @@
   "name": "hot-press",
   "version": "2.1.0",
   "description": "Event lifecycle management",
-  "main": "hot-press.js",
+  "main": "dist/hot-press.js",
   "scripts": {
     "build": "rollup -c",
     "build-w": "npm run build -- -w",
     "cover": "cat ./coverage/lcov.info | coveralls && rm -rf ./coverage",
     "lint": "eslint src/* test/*",
     "lint-w": "nodemon -x 'npm run lint' -w src -w test",
-    "prepare": "npm test && npm run build",
+    "prepublishOnly": "npm test && npm run build",
     "spec": "cross-env NODE_ENV=test nyc --reporter=lcov mocha --ui tdd --check-leaks --require babel-register",
     "spec-w": "mocha --ui tdd --check-leaks --watch --growl --reporter nyan --require babel-register",
     "test": "npm run lint && cross-env NODE_ENV=test nyc --reporter=lcovonly --reporter=text mocha --ui tdd --check-leaks --require babel-register"
