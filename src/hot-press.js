@@ -122,6 +122,7 @@ const $removeAllListeners = Symbol('removeAllListeners')
 const $startOfLifecycle = Symbol('startOfLifecycle')
 const $endOfLifecycle = Symbol('endOfLifecycle')
 const $getProcedures = Symbol('getProcedures')
+const $removedFunction = Symbol('removedFunction')
 
 /**
  * The exposable methods for each HotPress namespace.
@@ -267,7 +268,7 @@ export default class HotPress {
    */
   [$onPart] (part, message, fn) {
     message = prependHierarchy(message, this.prefix)
-    fn._hpRemoved = false
+    fn[$removedFunction] = false
     this[$getListenersFor](message)[part].push(fn)
   }
 
@@ -303,7 +304,7 @@ export default class HotPress {
 
     const call = fn => Promise
       .resolve()
-      .then(() => !fn._hpRemoved && fn(message, ...data))
+      .then(() => !fn[$removedFunction] && fn(message, ...data))
 
     const promise = typeof this.timeout === 'undefined'
       ? fn => Promise.resolve(call(fn))
@@ -352,7 +353,7 @@ export default class HotPress {
       const set = listeners[key]
       const index = set.indexOf(fn)
       if (index !== -1) {
-        set[index]._hpRemoved = true
+        set[index][$removedFunction] = true
         set.splice(index, 1)
         removed++
         break
@@ -371,7 +372,7 @@ export default class HotPress {
     const all = this[$getAllListenersFor](message)
     const amount = all ? all.length : 0
     all.forEach(listener => {
-      listener._hpRemoved = true
+      listener[$removedFunction] = true
     })
     delete this[$listeners][message]
     return amount
@@ -551,7 +552,7 @@ export default class HotPress {
   dereg (name) {
     name = prependHierarchy(name, this.prefix)
     if (this[$procedures][name]) {
-      this[$procedures][name]._hpRemoved = true
+      this[$procedures][name][$removedFunction] = true
       delete this[$procedures][name]
       return 1
     }
@@ -591,7 +592,7 @@ export default class HotPress {
     const promise = this[$startOfLifecycle]()
       .reduce(lifecycleReducer, Promise.resolve())
       .then(() => Promise.all([
-        !proc._hpRemoved && proc(...data),
+        !proc[$removedFunction] && proc(...data),
         emit(ON)
       ]))
       .then(([r]) => {
