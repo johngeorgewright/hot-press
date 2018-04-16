@@ -92,13 +92,6 @@ suite('all()', () => {
     broker.all({before: ['e4'], on: ['e', 'e1', 'e2'], after: ['e3']}, spy)
   })
 
-  teardown(() => {
-    broker.off('e1')
-    broker.off('e2')
-    broker.off('e3')
-    broker.off('e4')
-  })
-
   test('is called once all events have been published', () =>
     broker.emit('e')
       .then(() => broker.emit('e1'))
@@ -228,11 +221,6 @@ suite('onceAfter()', () => {
 })
 
 suite('triggers()', () => {
-  teardown(() => {
-    broker.off('e1')
-    broker.off('e2')
-  })
-
   test('the array of events are triggered by another event', () => {
     let spyA = sinon.spy()
     let spyB = sinon.spy()
@@ -430,11 +418,6 @@ suite('call()', () => {
     broker.reg('proc', spy)
   })
 
-  teardown(() => {
-    broker.dereg('proc')
-    broker.off('proc')
-  })
-
   test('returns a Promise', () => {
     broker.call('proc').should.be.instanceOf(Promise)
   })
@@ -464,10 +447,6 @@ suite('custom lifecycles', () => {
 
   setup(() => {
     prevLifecycle = broker.lifecycle
-  })
-
-  teardown(() => {
-    broker.lifecycle = prevLifecycle
   })
 
   test('methods are added', () => {
