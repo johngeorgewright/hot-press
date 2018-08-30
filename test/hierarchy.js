@@ -1,7 +1,7 @@
 /* eslint-env mocha */
 /* eslint-disable no-unused-expressions */
 
-import {getHierarchy, prependHierarchy, removePrefix} from '../src/hierarchy'
+import { getHierarchy, prependHierarchy, removePrefix } from '../src/hierarchy'
 import chai from 'chai'
 
 chai.should()

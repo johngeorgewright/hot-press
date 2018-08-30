@@ -44,9 +44,9 @@ suite('on()', () => {
   test('gives the message name and any data', () => {
     broker.on('e', (message, ...data) => {
       message.should.equal('e')
-      data.should.eql([{mung: 'face'}, {some: 'thing'}])
+      data.should.eql([{ mung: 'face' }, { some: 'thing' }])
     })
-    return broker.emit('e', {mung: 'face'}, {some: 'thing'})
+    return broker.emit('e', { mung: 'face' }, { some: 'thing' })
   })
 
   test('wildcards', () => {
@@ -89,7 +89,7 @@ suite('all()', () => {
 
   setup(() => {
     spy = sinon.spy()
-    broker.all({before: ['e4'], on: ['e', 'e1', 'e2'], after: ['e3']}, spy)
+    broker.all({ before: ['e4'], on: ['e', 'e1', 'e2'], after: ['e3'] }, spy)
   })
 
   test('is called once all events have been published', () =>
