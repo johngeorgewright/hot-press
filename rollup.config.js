@@ -13,18 +13,20 @@ export default {
       babelrc: false,
       exclude: 'node_modules/**',
       plugins: [
-        'external-helpers'
+        '@babel/plugin-syntax-dynamic-import',
+        '@babel/plugin-syntax-import-meta',
+        '@babel/plugin-proposal-class-properties',
+        '@babel/plugin-proposal-json-strings'
       ],
       presets: [
-        ['env', {
+        ['@babel/preset-env', {
           'modules': false,
           'targets': {
             'browsers': [
               'ie >= 9'
             ]
           }
-        }],
-        'stage-3'
+        }]
       ]
     })
   ]
