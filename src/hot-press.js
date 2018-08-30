@@ -1,7 +1,7 @@
-import {errorAfterMS, findDuplicates, flatten, upperFirst} from './util'
+import { errorAfterMS, findDuplicates, flatten, upperFirst } from './util'
 import HotPressExistingProcedureError from './hot-press-existing-procedure-error'
 import HotPressNonExistingProcedureError from './hot-press-non-existing-procedure-error'
-import {HIERARCHY_SEPARATOR, getHierarchy, prependHierarchy, removePrefix} from './hierarchy'
+import { HIERARCHY_SEPARATOR, getHierarchy, prependHierarchy, removePrefix } from './hierarchy'
 
 /**
  * The error namespace
@@ -182,7 +182,7 @@ export default class HotPress {
   [$getListenersFor] (message) {
     if (!this[$listeners][message]) {
       this[$listeners][message] = this.lifecycle.reduce(
-        (acc, method) => ({...acc, [method]: []}),
+        (acc, method) => ({ ...acc, [method]: [] }),
         {}
       )
     }
