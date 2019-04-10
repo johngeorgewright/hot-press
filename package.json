@@ -47,7 +47,7 @@
     "mocha": "^6.0.0",
     "mocha-lcov-reporter": "^1.2.0",
     "nyc": "^13.2.0",
-    "rollup": "^1.0.0",
+    "rollup": "1.9.2",
     "rollup-plugin-babel": "^4.0.2",
     "rollup-plugin-node-resolve": "^4.0.0",
     "sinon": "^7.2.3",
