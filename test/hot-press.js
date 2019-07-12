@@ -22,8 +22,8 @@ suite('emit()', () => {
   })
 
   test('it resolves once all subscribers have resolved', () => {
-    let spy = sinon.spy()
-    let resolve = () => new Promise(resolve => {
+    const spy = sinon.spy()
+    const resolve = () => new Promise(resolve => {
       spy()
       resolve()
     })
@@ -36,7 +36,7 @@ suite('emit()', () => {
 
 suite('on()', () => {
   test('subscribes to events', () => {
-    let spy = sinon.spy()
+    const spy = sinon.spy()
     broker.on('e', spy)
     return broker.emit('e').then(() => spy.should.have.been.calledOnce)
   })
@@ -50,7 +50,7 @@ suite('on()', () => {
   })
 
   test('wildcards', () => {
-    let spy = sinon.spy()
+    const spy = sinon.spy()
     broker.on('*', spy)
     return broker.emit('e')
       .then(() => spy.should.have.been.calledWith('e'))
@@ -60,7 +60,7 @@ suite('on()', () => {
   })
 
   test('wildcards in hierarchy', () => {
-    let spy = sinon.spy()
+    const spy = sinon.spy()
     broker.on('e.*', spy)
     return broker.emit('e.f')
       .then(() => spy.should.have.been.calledWith('e.f'))
@@ -70,8 +70,8 @@ suite('on()', () => {
   })
 
   test('error handling', () => {
-    let spy = sinon.spy()
-    let error = new Error('should be swallowed')
+    const spy = sinon.spy()
+    const error = new Error('should be swallowed')
     broker.on('e', () => {
       throw error
     })
@@ -168,7 +168,7 @@ suite('off()', () => {
 
 suite('once()', () => {
   test('it subscribes only to the first event', () => {
-    let spy = sinon.spy()
+    const spy = sinon.spy()
     broker.once('e', spy)
     return Promise.all([broker.emit('e'), broker.emit('e')])
       .then(() => spy.should.have.been.calledOnce)
@@ -183,7 +183,7 @@ suite('before()', () => {
   test('timeouts for long processes', testBeforeTimeout('before'))
 
   test('many subscribers', () => {
-    let spy = sinon.spy()
+    const spy = sinon.spy()
     broker.before('e', spy)
     broker.before('e', spy)
     return broker.emit('e').then(() => spy.should.have.been.calledTwice)
@@ -196,7 +196,7 @@ suite('onceBefore()', () => {
   test('pauses other events', testBeforePause('onceBefore'))
 
   test('it will only subscribe to the first event', () => {
-    let spy = sinon.spy()
+    const spy = sinon.spy()
     broker.onceBefore('e', spy)
     return Promise
       .all([broker.emit('e'), broker.emit('e')])
@@ -212,7 +212,7 @@ suite('onceAfter()', () => {
   test('subscribes to events after they\'re published', testAfterSubscriptions('onceAfter'))
 
   test('subscribes only to the first event', () => {
-    let spy = sinon.spy()
+    const spy = sinon.spy()
     broker.onceAfter('e', spy)
     return Promise
       .all([broker.emit('e'), broker.emit('e')])
@@ -222,8 +222,8 @@ suite('onceAfter()', () => {
 
 suite('triggers()', () => {
   test('the array of events are triggered by another event', () => {
-    let spyA = sinon.spy()
-    let spyB = sinon.spy()
+    const spyA = sinon.spy()
+    const spyB = sinon.spy()
     broker.on('e1', spyA)
     broker.on('e1', spyB)
     broker.on('e2', spyA)
@@ -236,7 +236,7 @@ suite('triggers()', () => {
   })
 
   test('the data is passed from the trigger to the tiggered', () => {
-    let spy = sinon.spy()
+    const spy = sinon.spy()
     broker.on('e1', spy)
     broker.triggers('e', ['e1'])
     return broker.emit('e', 'foo', 'bar').then(() => {
@@ -266,7 +266,7 @@ suite('triggersBefore()', () => {
 
 suite('triggersOnce()', () => {
   test('it subscribes only to the first event', () => {
-    let spy = sinon.spy()
+    const spy = sinon.spy()
     broker.on('e1', spy)
     broker.triggersOnce('e', ['e1'])
     return Promise.all([broker.emit('e'), broker.emit('e')])
@@ -286,7 +286,7 @@ suite('triggersOnceBefore()', () => {
   }))
 
   test('it subscribes only to the first event', () => {
-    let spy = sinon.spy()
+    const spy = sinon.spy()
     broker.on('e1', spy)
     broker.triggersOnceBefore('e', ['e1'])
     return Promise.all([broker.emit('e'), broker.emit('e')])
@@ -301,7 +301,7 @@ suite('triggersOnceAfter()', () => {
   }))
 
   test('it subscribes only to the first event', () => {
-    let spy = sinon.spy()
+    const spy = sinon.spy()
     broker.on('e1', spy)
     broker.triggersOnceAfter('e', ['e1'])
     return Promise.all([broker.emit('e'), broker.emit('e')])
@@ -349,7 +349,7 @@ suite('ns()', () => {
   test('properties cascade on creation of a new namespace', () => {
     foo.timeout = 500
     foo.lifecycle = ['mung', 'on', 'face']
-    let zob = foo.ns('zob')
+    const zob = foo.ns('zob')
     zob.timeout.should.equal(500)
     zob.lifecycle.should.eql(['mung', 'on', 'face'])
   })
@@ -361,7 +361,7 @@ suite('reg()', () => {
   })
 
   test('it will only allow one procedure per name', () => {
-    let incorrect = () => broker.reg('proc', () => {})
+    const incorrect = () => broker.reg('proc', () => {})
     incorrect.should.throw('The procedure "proc" is already registered')
   })
 })
@@ -423,7 +423,7 @@ suite('call()', () => {
   })
 
   test('the process is called', () => {
-    let data = ['i', 'am', 'data']
+    const data = ['i', 'am', 'data']
     return broker.call('proc', data).then(() => {
       spy.should.have.been.calledOnce
       spy.should.have.been.calledWithExactly(data)
@@ -470,7 +470,7 @@ suite('custom lifecycles', () => {
 function testBeforePause (method) {
   return done => {
     method = typeof method === 'string' ? broker[method] : method
-    let spy = sinon.spy()
+    const spy = sinon.spy()
     broker.on('e', spy)
     method('e', () => new Promise(resolve => setTimeout(resolve, 100)))
     broker.emit('e')
@@ -485,15 +485,15 @@ function testBeforePause (method) {
 function testBeforeTimeout (method) {
   return () => {
     method = typeof method === 'string' ? broker[method] : method
-    let spyA = sinon.spy()
-    let spyB = sinon.spy()
+    const spyA = sinon.spy()
+    const spyB = sinon.spy()
     broker.after('e', spyA)
     broker.on('error.e', spyB)
     method('e', () => new Promise(resolve => setTimeout(resolve, broker.timeout + 5)))
     return broker.emit('e').then(() => {
       spyA.should.have.been.calledOnce
       spyB.should.have.been.calledOnce
-      let error = spyB.firstCall.args[1]
+      const error = spyB.firstCall.args[1]
       error.should.be.instanceOf(Error)
       error.should.have.property('message', `Exceeded ${broker.timeout}ms`)
     })
@@ -503,8 +503,8 @@ function testBeforeTimeout (method) {
 function testBeforeSubscriptions (method) {
   return () => {
     method = typeof method === 'string' ? broker[method] : method
-    let spyA = sinon.spy()
-    let spyB = sinon.spy()
+    const spyA = sinon.spy()
+    const spyB = sinon.spy()
     broker.on('e', spyA)
     method('e', spyB)
     return broker.emit('e').then(() => spyB.should.have.been.calledBefore(spyA))
@@ -514,8 +514,8 @@ function testBeforeSubscriptions (method) {
 function testAfterSubscriptions (method) {
   return () => {
     method = typeof method === 'string' ? broker[method] : method
-    let spyA = sinon.spy()
-    let spyB = sinon.spy()
+    const spyA = sinon.spy()
+    const spyB = sinon.spy()
     method('e', spyA)
     broker.on('e', spyB)
     return broker.emit('e').then(() => {
