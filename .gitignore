@@ -1,6 +1,4 @@
-coverage
 dist
 *.log
 node_modules
-.nyc_output
-out
+
