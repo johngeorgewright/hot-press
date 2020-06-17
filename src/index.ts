@@ -1,7 +1,7 @@
 type Listener<Arg> = (arg: Arg) => Promise<void>
 
 type EventListeners<Events extends object> = {
-  [EventName in keyof Events]?: Array<Listener<Events[EventName]>>
+  [EventName in keyof Events]?: Listener<Events[EventName]>[]
 }
 
 interface EventLifecycle<Events extends object> {
@@ -29,9 +29,7 @@ class Broker<Events extends object> {
     const listeners = this.listeners[part][eventName]
 
     return listeners
-      ? Promise.all(
-          listeners.map((listener) => listener(arg as Events[EventName]))
-        )
+      ? Promise.all(listeners.map((listener) => listener(arg)))
       : []
   }
 
