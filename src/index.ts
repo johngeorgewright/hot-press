@@ -1,3 +1,5 @@
+import { expectResponseWithin } from './async'
+
 type Listener<Arg> = (arg: Arg) => Promise<void>
 
 type EventListeners<Events extends object> = {
@@ -10,15 +12,25 @@ interface EventLifecycle<Events extends object> {
   after: EventListeners<Events>
 }
 
-class Broker<Events extends object> {
-  private listeners: EventLifecycle<Events>
+interface EmittionOptions {
+  timeout?: number
+}
 
-  constructor() {
+export default class Broker<Events extends object> {
+  private listeners: EventLifecycle<Events>
+  private timeout: number
+
+  constructor({ timeout = 500 }: EmittionOptions = {}) {
     this.listeners = {
       before: {},
       on: {},
       after: {},
-    } as EventLifecycle<Events>
+    }
+    this.timeout = timeout
+  }
+
+  private async callListener<Arg>(listener: Listener<Arg>, arg: Arg) {
+    return expectResponseWithin(this.timeout, async () => listener(arg))
   }
 
   private async emitPart<EventName extends keyof Events>(
@@ -29,7 +41,9 @@ class Broker<Events extends object> {
     const listeners = this.listeners[part][eventName]
 
     return listeners
-      ? Promise.all(listeners.map((listener) => listener(arg)))
+      ? Promise.all(
+          listeners.map((listener) => this.callListener(listener, arg))
+        )
       : []
   }
 
