@@ -5,10 +5,15 @@ import {
   ErrorListeners,
   Listener,
   ListenerArg,
-  ListenerOptions,
   ListenerReturn,
 } from './types/EventListeners'
-import { EventLifecycle, EmitOptions, EventPart } from './types/EventLifecycle'
+import { EventLifecycle, EventPart } from './types/EventLifecycle'
+
+export interface EmitOptions {
+  timeout?: number
+}
+
+export type ListenerOptions = WeakMap<Listener<any, any>, EmitOptions>
 
 export default class Broker<Events extends object> {
   private errorListeners: ErrorListeners<Events>

@@ -7,7 +7,3 @@ export interface EventLifecycle<Events extends object> {
 }
 
 export type EventPart<Events extends object> = keyof EventLifecycle<Events>
-
-export interface EmitOptions {
-  timeout?: number
-}

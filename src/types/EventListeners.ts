@@ -1,5 +1,4 @@
 import EventError from '../EventError'
-import { EmitOptions } from './EventLifecycle'
 
 export type ListenerArg<
   Events extends object,
@@ -29,5 +28,3 @@ export type EventListeners<Events extends object> = {
 export type ErrorListeners<Events extends object> = {
   [EventName in keyof Events]?: ErrorListener<Events, EventName>[]
 }
-
-export type ListenerOptions = WeakMap<Listener<any, any>, EmitOptions>
