@@ -24,9 +24,7 @@ test('errorAfter()', (done) => {
 
   promise.catch((error) => {
     clearTimeout(time)
-    expect(error.message).toMatchInlineSnapshot(
-      `"Promise timed out after 10ms"`
-    )
+    expect(error.message).toBe('Promise timed out after 10ms')
     expect(error).toHaveProperty('promise')
     done()
   })

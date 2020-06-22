@@ -1,48 +1,14 @@
 import { resolveWithin } from './async'
-
-type ListenerArg<
-  Events extends object,
-  EventName extends keyof Events
-> = Events[EventName] extends [any, any]
-  ? Events[EventName][0]
-  : Events[EventName]
-
-type ListenerReturn<
-  Events extends object,
-  EventName extends keyof Events
-> = Events[EventName] extends [any, any] ? Events[EventName][1] : void
-
-interface Listener<Events extends object, EventName extends keyof Events> {
-  (arg: ListenerArg<Events, EventName>): Promise<
-    ListenerReturn<Events, EventName>
-  >
-}
-
-interface ErrorListener<Events extends object, EventName extends keyof Events> {
-  (error: EventError<Events, EventName>): void
-}
-
-type EventListeners<Events extends object> = {
-  [EventName in keyof Events]?: Listener<Events, EventName>[]
-}
-
-type ErrorListeners<Events extends object> = {
-  [EventName in keyof Events]?: ErrorListener<Events, EventName>[]
-}
-
-type ListenerOptions = WeakMap<Listener<any, any>, EmittionOptions>
-
-interface EventLifecycle<Events extends object> {
-  before: EventListeners<Events>
-  on: EventListeners<Events>
-  after: EventListeners<Events>
-}
-
-type EventPart<Events extends object> = keyof EventLifecycle<Events>
-
-interface EmittionOptions {
-  timeout?: number
-}
+import EventError from './EventError'
+import {
+  ErrorListener,
+  ErrorListeners,
+  Listener,
+  ListenerArg,
+  ListenerOptions,
+  ListenerReturn,
+} from './types/EventListeners'
+import { EventLifecycle, EmitOptions, EventPart } from './types/EventLifecycle'
 
 export default class Broker<Events extends object> {
   private errorListeners: ErrorListeners<Events>
@@ -50,7 +16,7 @@ export default class Broker<Events extends object> {
   private listenerOptions: ListenerOptions
   private timeout: number
 
-  constructor({ timeout = 500 }: EmittionOptions = {}) {
+  constructor({ timeout = 500 }: EmitOptions = {}) {
     this.errorListeners = {}
     this.listeners = {
       before: {},
@@ -140,7 +106,7 @@ export default class Broker<Events extends object> {
     part: EventPart<Events>,
     eventName: EventName,
     listener: Listener<Events, EventName>,
-    { timeout = this.timeout }: EmittionOptions = {}
+    { timeout = this.timeout }: EmitOptions = {}
   ) {
     if (!this.listeners[part][eventName]) {
       this.listeners[part][eventName] = []
@@ -156,7 +122,7 @@ export default class Broker<Events extends object> {
     part: EventPart<Events>,
     eventName: EventName,
     listener: Listener<Events, EventName>,
-    options?: EmittionOptions
+    options?: EmitOptions
   ) {
     const listenerWrapper: Listener<Events, EventName> = async (arg) => {
       this.removeFrom(part, eventName, listenerWrapper)
@@ -169,7 +135,7 @@ export default class Broker<Events extends object> {
   before<EventName extends keyof Events>(
     eventName: EventName,
     listener: Listener<Events, EventName>,
-    options?: EmittionOptions
+    options?: EmitOptions
   ) {
     return this.addEventListener('before', eventName, listener, options)
   }
@@ -177,7 +143,7 @@ export default class Broker<Events extends object> {
   onceBefore<EventName extends keyof Events>(
     eventName: EventName,
     listener: Listener<Events, EventName>,
-    options?: EmittionOptions
+    options?: EmitOptions
   ) {
     return this.addOnceListener('before', eventName, listener, options)
   }
@@ -185,7 +151,7 @@ export default class Broker<Events extends object> {
   on<EventName extends keyof Events>(
     eventName: EventName,
     listener: Listener<Events, EventName>,
-    options?: EmittionOptions
+    options?: EmitOptions
   ) {
     return this.addEventListener('on', eventName, listener, options)
   }
@@ -193,7 +159,7 @@ export default class Broker<Events extends object> {
   once<EventName extends keyof Events>(
     eventName: EventName,
     listener: Listener<Events, EventName>,
-    options?: EmittionOptions
+    options?: EmitOptions
   ) {
     return this.addOnceListener('on', eventName, listener, options)
   }
@@ -201,7 +167,7 @@ export default class Broker<Events extends object> {
   after<EventName extends keyof Events>(
     eventName: EventName,
     listener: Listener<Events, EventName>,
-    options?: EmittionOptions
+    options?: EmitOptions
   ) {
     return this.addEventListener('after', eventName, listener, options)
   }
@@ -209,7 +175,7 @@ export default class Broker<Events extends object> {
   onceAfter<EventName extends keyof Events>(
     eventName: EventName,
     listener: Listener<Events, EventName>,
-    options?: EmittionOptions
+    options?: EmitOptions
   ) {
     return this.addOnceListener('after', eventName, listener, options)
   }
@@ -270,25 +236,5 @@ export default class Broker<Events extends object> {
    */
   addEventTypes<NewEvents extends object>(): Broker<Events & NewEvents> {
     return (this as unknown) as Broker<Events & NewEvents>
-  }
-}
-
-export class EventError<
-  Events extends object,
-  EventName extends keyof Events
-> extends Error {
-  public readonly originalError: Error
-  public readonly eventName: EventName
-  public readonly arg: ListenerArg<Events, EventName>
-
-  constructor(
-    eventName: EventName,
-    arg: ListenerArg<Events, EventName>,
-    originalError: Error
-  ) {
-    super(originalError.message)
-    this.eventName = eventName
-    this.arg = arg
-    this.originalError = originalError
   }
 }

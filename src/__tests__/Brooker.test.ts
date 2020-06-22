@@ -1,4 +1,4 @@
-import Broker from '..'
+import Broker from '../Broker'
 
 test('asynchronous lifecycle', async () => {
   const broker = new Broker<{
