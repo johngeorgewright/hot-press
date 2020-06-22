@@ -2,7 +2,7 @@ import Broker from '..'
 
 test('asynchronous lifecycle', async () => {
   const broker = new Broker<{
-    timer: void
+    timer: [void, number]
   }>()
 
   const mock = jest.fn()
@@ -10,35 +10,48 @@ test('asynchronous lifecycle', async () => {
   broker.before('timer', async () => {
     await randomTimeout()
     mock(1)
+    return 1
   })
 
   broker.on('timer', async () => {
     await randomTimeout()
-    mock(3)
+    mock(2)
+    return 2
   })
 
   broker.after('timer', async () => {
     await randomTimeout()
-    mock(5)
+    mock(3)
+    return 3
   })
 
   broker.before('timer', async () => {
     await randomTimeout()
-    mock(2)
+    mock(1)
+    return 1
   })
 
   broker.on('timer', async () => {
     await randomTimeout()
-    mock(4)
+    mock(2)
+    return 2
   })
 
-  await broker.emit('timer')
-
+  expect(await broker.emit('timer')).toEqual([1, 1, 2, 2, 3])
   expect(mock).toHaveBeenNthCalledWith(1, 1)
-  expect(mock).toHaveBeenNthCalledWith(2, 2)
-  expect(mock).toHaveBeenNthCalledWith(3, 3)
-  expect(mock).toHaveBeenNthCalledWith(4, 4)
-  expect(mock).toHaveBeenNthCalledWith(5, 5)
+  expect(mock).toHaveBeenNthCalledWith(2, 1)
+  expect(mock).toHaveBeenNthCalledWith(3, 2)
+  expect(mock).toHaveBeenNthCalledWith(4, 2)
+  expect(mock).toHaveBeenNthCalledWith(5, 3)
+})
+
+test('once listeners', async () => {
+  const broker = new Broker<{ foo: ['bar', void] }>()
+  const mock = jest.fn()
+
+  broker.once('foo', mock)
+  await Promise.all([broker.emit('foo', 'bar'), broker.emit('foo', 'bar')])
+  expect(mock).toHaveBeenCalledTimes(1)
 })
 
 async function randomTimeout() {

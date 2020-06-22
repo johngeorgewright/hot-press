@@ -1,9 +1,4 @@
-import {
-  timeout,
-  errorAfter,
-  TimedOutPromise,
-  expectResponseWithin,
-} from '../async'
+import { cancelableTimeout, timeout, resolveWithin, errorAfter } from '../async'
 
 test('timeout()', (done) => {
   const time = setTimeout(
@@ -11,7 +6,7 @@ test('timeout()', (done) => {
     15
   )
 
-  const [promise] = timeout(10)
+  const promise = timeout(10)
 
   promise.then(() => {
     clearTimeout(time)
@@ -25,17 +20,20 @@ test('errorAfter()', (done) => {
     15
   )
 
-  const [promise] = errorAfter(10)
+  const promise = errorAfter(10)
 
   promise.catch((error) => {
     clearTimeout(time)
-    expect(error).toBeInstanceOf(TimedOutPromise)
+    expect(error.message).toMatchInlineSnapshot(
+      `"Promise timed out after 10ms"`
+    )
+    expect(error).toHaveProperty('promise')
     done()
   })
 })
 
-test('cancelling timeouts', (done) => {
-  const [promise, cancel] = timeout(15)
+test('cancelableTimeout()', (done) => {
+  const [promise, cancel] = cancelableTimeout(15)
 
   promise.then(() => {
     done(new Error("Cancelling didn't work"))
@@ -45,7 +43,4 @@ test('cancelling timeouts', (done) => {
   setTimeout(done, 20)
 })
 
-test('expectResponseWithin()', async () =>
-  expectResponseWithin(10, async () => {
-    await timeout(5)[0]
-  }))
+test('resolveWithin()', async () => resolveWithin(10, timeout(5)))
